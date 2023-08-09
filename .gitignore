@@ -1,0 +1,4 @@
+bookvenv/
+.env
+__pycache__/
+migrations/
