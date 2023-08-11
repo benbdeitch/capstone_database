@@ -2,7 +2,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from app import db, login_manager
 from random import randint
-
+from datetime import date
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -40,6 +40,7 @@ class User(db.Model, UserMixin):
 
 class Book(db.Model):
 
+    #This table tracks stored book data, that other users have already requested from the Google API. 
     id = db.Column(db.Integer(), primary_key = True)
     title = db.Column(db.String(), nullable = False)
     author = db.Column(db.String(), nullable = False)
@@ -60,7 +61,8 @@ class BookRequests(db.Model):
     fromId = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
     toId = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
     bookId = db.Column(db.Integer(), db.ForeignKey('book.id'), nullable = False)
-
+    shortMessage = db.Column(db.String(300), nullable = True)
+    
     def commit(self):
         db.session.add(self)
         db.session.commit()
@@ -70,10 +72,30 @@ class BookRequests(db.Model):
         db.session.commit()
 
 class BookList(db.Model):
+
+    #This table tracks which users have given books on their respective reading lists. 
+
     index = db.Column(db.Integer(), primary_key = True)
     userId = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
     bookId = db.Column(db.Integer(), db.ForeignKey('book.id'), nullable = False)
     priority = db.Column(db.Integer())
+    dateAdded = db.Column(db.Date(), nullable = False)
+
+    def commit(self):
+        self.dateAdded = date.today()
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+class BlacklistedBook(db.Model):
+
+    #This table tracks the books that a given user has no interest in seeing requests of, again. 
+    index = db.Column(db.Integer(), primary_key = True)
+    userId = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
+    bookId = db.Column(db.Integer(), db.ForeignKey('book.id'), nullable = False)
 
     def commit(self):
         db.session.add(self)
@@ -83,10 +105,70 @@ class BookList(db.Model):
         db.session.delete(self)
         db.session.commit()
 
-class bookBlackList(db.Model):
+class BookHistory(db.Model):
+
+    #This table tracks the books that a User has read, and any review or rating that they have given them. 
+
     index = db.Column(db.Integer(), primary_key = True)
     userId = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
     bookId = db.Column(db.Integer(), db.ForeignKey('book.id'), nullable = False)
+    rating = db.Column(db.Integer(),  nullable = False)
+    review = db.Column(db.String(10000), nullable = True)
+
+    def updateRating(self, rating):
+        self.stars = 0 if rating < 0 else rating if rating <=10 else 10
+        self.commit();
+    
+    def updateReview(self, reviewString):
+        self.review = reviewString;
+        self.commit();
+    def commit(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+
+class UserBlackList(db.Model):
+
+    
+    index = db.Column(db.Integer(), primary_key = True)
+    userId = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
+    blockedUserId  = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
+    dateBlocked = db.Column(db.Date(), nullable = False)
+
+    def commit(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+
+class FriendList(db.Model):
+    index = db.Column(db.Integer(), primary_key = True)
+    userIdLower = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
+    userIdHigher = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
+
+
+    def commit(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+
+class FriendRequest(db.Model):
+    index = db.Column(db.Integer(), primary_key = True)
+    toUser = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
+    fromUser = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
+
+
 
     def commit(self):
         db.session.add(self)

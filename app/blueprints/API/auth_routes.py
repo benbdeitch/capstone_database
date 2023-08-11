@@ -23,7 +23,7 @@ def register():
         u.hash_password(content["password"])
         u.commit()
         access_token = create_access_token(identity = content["username"])
-        return jsonify({'message': f'User account created for {u.username}.', "access_token": str(access_token)})
+        return jsonify({'Success': f'User account created for {u.username}.', "access_token": str(access_token)})
     except:
         return jsonify(response), 400
     
@@ -36,10 +36,10 @@ def sign_in():
       access_token = create_access_token(identity=username)
       return jsonify({'access_token':access_token}), 200
    else:
-      return jsonify({'message':'Invalid Username or Password / Try Again'}), 400
+      return jsonify({'Error':'Invalid Username or Password / Try Again'}), 400
    
 @api.post('/logout')
 def logout():
-   response = jsonify({'message':'Successful Logout'})
+   response = jsonify({'Success':'Successful Logout'})
    unset_jwt_cookies(response)
    return response
