@@ -91,10 +91,10 @@ def get_friend_list(friend):
       if friend_user:
           lowerId  = user.id if (user.id < friend_user.id) else friend_user.id
           higherId = user.id if lowerId == friend_user.id else friend_user.id
-          isFriends = FriendList.query.filter_by(userLowerId = lowerId, userHigherId = higherId).first()
+          isFriends = FriendList.query.filter_by(userIdLower= lowerId, userIdHigher = higherId).first()
           if isFriends:
               booklist = {"books":[]}
-              list = db.session.query(Book.id, Book.title, Book.author, Book.publishDate, Book.image, BookList.priority).join(Book, BookList.bookId == Book.id).filter(BookList.userId == user.id).all()
+              list = db.session.query(Book.id, Book.title, Book.author, Book.publishDate, Book.image, BookList.priority).join(Book, BookList.bookId == Book.id).filter(BookList.userId == friend_user.id).all()
 
               if list:
                   print(list)
