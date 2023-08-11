@@ -14,11 +14,13 @@ def add_book():
     author = request.json["author"]
     image = request.json["image"]
     publishDate = request.json["pubdate"]
-    
-    book = Book(title = book_title, author = author, image = image, publishDate = publishDate)
-    book.commit();
+    if not Book.query.filter_by(title = book_title, author = author).first():
 
-    return jsonify({"Success": f'{book.title} has been added.'})
+        book = Book(title = book_title, author = author, image = image, publishDate = publishDate)
+        book.commit();
+
+        return jsonify({"Success": f'"{book.title}" has been added.'})
+    return jsonify({"Error": f'Book "{book_title}" by {author} is already in the database.'})
 
 
 @api.post('/add-book-list')

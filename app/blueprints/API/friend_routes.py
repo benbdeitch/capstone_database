@@ -1,8 +1,9 @@
 from . import bp as api
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from app.models import User, FriendRequest, FriendList
+from app.models import User, FriendRequest, FriendList, Book, BookList
 from app import db
 from flask import request, jsonify
+from sqlalchemy import or_
 
 
 
@@ -20,30 +21,93 @@ def make_friend_request():
              return jsonify({"Error": "Incorrectly formatted request"}), 400
          toUser = User.query.filter_by(username = friend).first()
          if toUser:
-            alreadyMade = FriendRequest.query.filter_by(fromId = user.Id, toId = toUser.id).first()
+            alreadyMade = FriendRequest.query.filter_by(fromUser = user.id, toUser = toUser.id).first()
+            print(alreadyMade)
             if alreadyMade:
                 return jsonify({"Error": "Friend Request already made"})
             lowerId  = user.id if (user.id < toUser.id) else toUser.id
             higherId = user.id if lowerId == toUser.id else toUser.id
-            alreadyFriends = FriendList.query.filter_by(userIdLower = lowerId, userIdHigher = higherId)
+            alreadyFriends = FriendList.query.filter_by(userIdLower = lowerId, userIdHigher = higherId).first()
             if alreadyFriends:
                 return jsonify({"Error": f'You are already friends with {friend}'})
-            newRequest = FriendRequest(toId = toUser.id, fromId = user.id)
+            newRequest = FriendRequest(toUser = toUser.id, fromUser = user.id)
             newRequest.commit()
-            return jsonify({"Success": f'Friend {friend} has been added.'}), 200
+            return jsonify({"Success": f'Friend request has been sent to {friend}.'}), 200
          else:
              return jsonify({"Error": f'User {friend} not found on the database.'})
      else: 
          return jsonify({"Error": "Request must be made from a valid account."})
      
 
+@api.get('accept-<friend>-request')
+@jwt_required()
+def accept_request(friend):
+    username = get_jwt_identity()
+    user = User.query.filter_by(username = username).first()
+    if user:
+        friendUser = User.query.filter_by(username = friend).first()
+        if friendUser:
+            isValidRequest = FriendRequest.query.filter_by(toUser = user.id, fromUser = friendUser.id).first()
+            if isValidRequest:
+                lowerId  = user.id if (user.id < friendUser.id) else friendUser.id
+                higherId = user.id if lowerId == friendUser.id else friendUser.id
+                newFriendRelation = FriendList(userIdLower = lowerId, userIdHigher = higherId)
+                newFriendRelation.commit()
+                isValidRequest.delete()
+
+                return jsonify({"Success": f'User {username} is now friends with User {friend}'}), 200
+            return jsonify({"Error": f'User {friend} must have sent User {username} a friend request, before it can be accepted.'}), 400
+        return jsonify({"Error": f'User {friend} does not exist'}), 400
+    return jsonify({"Error": "User's authentication failed. Please log in, and try again."}), 400
 
 
 
-@api.get('/get-<friend>-list')
+@api.get('/all-friends')
+@jwt_required()
+def get_all_friends():
+    response = {"friends": []}
+    username = get_jwt_identity();
+    user = User.query.filter_by(username = username).first()
+    allFriends = FriendList.query.filter(or_(FriendList.userIdLower== user.id, FriendList.userIdHigher == user.id )).all()
+    if len(allFriends) == 0:
+        return jsonify(response), 200
+    friend_id_list = []
+    for query in allFriends:
+        friend_id_list.append(query.userIdLower if query.userIdLower!= user.id else query.userIdHigher)
+    print(friend_id_list)
+    
+    for id in friend_id_list:
+        friend = User.query.filter_by(id = id).first()
+        response["friends"].append({"username": friend.username, "email": friend.email})
+    return jsonify(response), 200
+
+@api.get('/<friend>-reading-list')
 @jwt_required()
 def get_friend_list(friend):
    username = get_jwt_identity()
    user = User.query.filter_by(username = username).first()
    if user:
-      pass
+      friend_user = User.query.filter_by(username = friend).first()
+      if friend_user:
+          lowerId  = user.id if (user.id < friend_user.id) else friend_user.id
+          higherId = user.id if lowerId == friend_user.id else friend_user.id
+          isFriends = FriendList.query.filter_by(userLowerId = lowerId, userHigherId = higherId).first()
+          if isFriends:
+              booklist = {"books":[]}
+              list = db.session.query(Book.id, Book.title, Book.author, Book.publishDate, Book.image, BookList.priority).join(Book, BookList.bookId == Book.id).filter(BookList.userId == user.id).all()
+
+              if list:
+                  print(list)
+                  for i in range(len(list)):
+                      book = {"title": list[i].title,
+                 "author": list[i].author,
+                 "publishDate":  list[i].publishDate,
+                  "image": list[i].image,
+                  "priority": str(list[i].priority),
+                  "id": str(i) }
+                      booklist["books"].append(book)
+                  return jsonify(booklist), 200
+              return jsonify({"Message": "Empty List"})
+          return jsonify({"Error": f'User {username} and User {friend} are not friends.'}), 400
+      return jsonify({"Error": f'User {friend} does not exist.'}), 400
+   return jsonify({"Error": "User {username} authentication failed. "}), 400
