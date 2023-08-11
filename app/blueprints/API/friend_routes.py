@@ -7,7 +7,7 @@ from sqlalchemy import or_
 
 
 
-
+#Route for posing a friend request to another user. Input is {"username": <desired friend's username>}.
 @api.post('/make-request')
 @jwt_required()
 def make_friend_request():
@@ -39,6 +39,7 @@ def make_friend_request():
          return jsonify({"Error": "Request must be made from a valid account."})
      
 
+#Route for accepting a friend request from a user. Fails if there is no pending request from that user to accept.
 @api.get('accept-<friend>-request')
 @jwt_required()
 def accept_request(friend):
@@ -61,7 +62,8 @@ def accept_request(friend):
     return jsonify({"Error": "User's authentication failed. Please log in, and try again."}), 400
 
 
-
+#Returns a list of all friends that you have. Returns in the form of {"friends": <array of friend objects>}
+#Friend objects, here, are {"username": <friend's username>, "email": <friend's email>}
 @api.get('/all-friends')
 @jwt_required()
 def get_all_friends():
@@ -81,6 +83,9 @@ def get_all_friends():
         response["friends"].append({"username": friend.username, "email": friend.email})
     return jsonify(response), 200
 
+
+
+#Returns the reading list of a user's friend. The user must already be friends with the target user, for this to work. 
 @api.get('/<friend>-reading-list')
 @jwt_required()
 def get_friend_list(friend):

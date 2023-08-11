@@ -5,7 +5,7 @@ from app.models import User, Book, BookList, BookRequests, FriendRequest
 from requests import get
 
 
-
+#Placeholder route-- will eventually be replaced by integration with the google book api. 
 @api.post('/add-book')
 def add_book():
     data = request.json
@@ -23,6 +23,8 @@ def add_book():
     return jsonify({"Error": f'Book "{book_title}" by {author} is already in the database.'})
 
 
+
+#Route for adding books to the user's reading list. Requires an input of {"priority": <value to indicate ordering on the reading list.>, "id": <book's id number in the database.> }
 @api.post('/add-book-list')
 @jwt_required()
 def add_book_list():

@@ -5,7 +5,7 @@ from app.models import User, BookList, Book, BookRequests
 from app import db
 
 
-
+#Currently returns a user's username and email. May later be integrated with the 'get friend's reading list' function.
 @api.get('/user-profile/<user>')
 @jwt_required()
 def user_profile(user):
@@ -18,7 +18,7 @@ def user_profile(user):
 
 
 
-
+#Gets a user's own reading list. 
 @api.get('/get-book-list')
 @jwt_required()
 def get_book_list():

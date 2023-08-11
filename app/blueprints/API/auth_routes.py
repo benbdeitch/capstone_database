@@ -1,10 +1,10 @@
 from flask import request, jsonify
-from flask_jwt_extended import create_access_token, unset_jwt_cookies, jwt_required
-
+from flask_jwt_extended import create_access_token, unset_jwt_cookies
 from . import bp as api
 from app.models import User
 
-
+#accepts a request with {"username": <desired username>, "password": <desired password>, "email": <desired email address>}. If username or email are shared with a pre-existing user, no account will be created.
+#Returns an access token, as though the user just signed in.
 @api.post('/register')
 def register():
     content, response = request.json, {}
@@ -28,6 +28,7 @@ def register():
         return jsonify(response), 400
     
 
+#Accepts a request with {"username": <user's username>, "password": <user's password>}. Returns an access token that is used for verification by JWT. 
 @api.post('/signin')
 def sign_in():
    username, password = request.json.get('username'), request.json.get('password')
@@ -37,7 +38,9 @@ def sign_in():
       return jsonify({'access_token':access_token}), 200
    else:
       return jsonify({'Error':'Invalid Username or Password / Try Again'}), 400
-   
+
+
+#Requires no input, and unsets the Access Token you were using. 
 @api.post('/logout')
 def logout():
    response = jsonify({'Success':'Successful Logout'})

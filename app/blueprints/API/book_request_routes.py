@@ -5,6 +5,8 @@ from app.models import User, BookList, Book, BookRequests
 from app import db
 from sqlalchemy import and_
 
+
+#Accepts a request with {"toUsername": <target user's username, "bookId": <book's id>, "message": <optional message for the recipient}
 @api.post('/recommend-book')
 @jwt_required()
 def recommend_book():
@@ -50,4 +52,30 @@ def get_my_recommendations():
 @jwt_required()
 def accept_recommendation():
     data = request.json
-    rec = BookRequests.query.filter_by()
+    username = get_jwt_identity()
+    user = User.query.filter_by(username = username).first()
+    rec = BookRequests.query.filter_by(index = data["index"]).first()
+    if not rec: 
+        return jsonify({"Error": f'Recommendation #{data["index"]} does not exist.'})
+    if rec.toId != user.id:
+        return jsonify({"Error": f'Request #{data["index"]} is not associated with your account.'}), 400
+    book_to_read = BookList(userId = user.id, bookId = rec.bookId)
+    book_to_read.commit()
+    rec.delete() 
+    return jsonify({"Success": "Recommendation accepted."})
+
+
+#Accepts a request with  {"index": <index>}
+@api.post('/deny-rec')
+@jwt_required()
+def deny_recommendation():
+    data = request.json
+    username = get_jwt_identity()
+    user = User.query.filter_by(username = username).first()
+    rec = BookRequests.query.filter_by(index = data["index"]).first()
+    if not rec: 
+        return jsonify({"Error": f'Recommendation #{data["index"]} does not exist.'})
+    if rec.toId != user.id:
+        return jsonify({"Error": f'Request #{data["index"]} is not associated with your account.'}), 400
+    rec.delete()
+    return jsonify({"Success": "Recommendation deleted."})
