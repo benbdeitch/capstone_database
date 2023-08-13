@@ -43,9 +43,9 @@ class Book(db.Model):
     #This table tracks stored book data, that other users have already requested from the Google API. 
     id = db.Column(db.Integer(), primary_key = True)
     title = db.Column(db.String(), nullable = False)
-    author = db.Column(db.String(), nullable = False)
-    image = db.Column(db.String(), nullable = False)
-    publishDate = db.Column(db.String(), nullable = False)
+    author = db.Column(db.String(), nullable = True)
+    image = db.Column(db.String(), nullable = True)
+    publishDate = db.Column(db.String(), nullable = True)
     googleId = db.Column(db.String())
 
 

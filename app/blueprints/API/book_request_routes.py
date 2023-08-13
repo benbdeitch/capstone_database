@@ -86,10 +86,11 @@ def deny_recommendation():
     return jsonify({"Success": "Recommendation deleted."})
 
 
+#helper function:
 def add_to_database(googleId):
     data = requests.get(F'https://www.googleapis.com/books/v1/volumes/{googleId}').json()
     if "error" in data.keys():
         return False
-    book = Book(title = data["volumeInfo"]["title"], author = data["volumeInfo"]["authors"][0], image = data["volumeInfo"]["imageLinks"]["thumbnail"], publishDate = data["volumeInfo"]["publishedDate"] if "publishedDate" in data["volumeInfo"].keys() else "No Date", googleId = googleId)
+    book = Book(title = data["volumeInfo"]["title"], author = data["volumeInfo"]["authors"][0] if "authors" in data["volumeInfo"].keys() else None, image = data["volumeInfo"]["imageLinks"]["thumbnail"] if "imageLinks" in data["volumeInfo"].keys() else None, publishDate = data["volumeInfo"]["publishedDate"] if "publishedDate" in data["volumeInfo"].keys() else None, googleId = googleId)
     book.commit()
     return book
