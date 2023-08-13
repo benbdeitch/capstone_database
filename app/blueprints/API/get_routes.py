@@ -11,7 +11,7 @@ from app import db
 def user_profile(user):
    print(user)
    user1 = User.query.filter_by(username = user).first()
-   if user:
+   if user1:
 
       return jsonify({ 'username':user, 'email':user1.email}), 200
    return jsonify(message='Invalid Username'), 404
