@@ -26,7 +26,7 @@ def get_book_list():
    user = User.query.filter_by(username = username).first()
    if user:
       booklist = {"books":[]}
-      list = db.session.query(Book.id, Book.title, Book.author, Book.publishDate, Book.image, BookList.priority).join(Book, BookList.bookId == Book.id).filter(BookList.userId == user.id).all()
+      list = db.session.query(Book.id, Book.googleId, Book.title, Book.author, Book.publishDate, Book.image, BookList.priority).join(Book, BookList.bookId == Book.id).filter(BookList.userId == user.id).all()
 
       if list:
          print(list)
@@ -36,7 +36,8 @@ def get_book_list():
                  "publishDate":  list[i].publishDate,
                   "image": list[i].image,
                   "priority": str(list[i].priority),
-                  "id": str(i) }
+                  "id": str(i),
+                   "googleId": list[i].googleId }
             booklist["books"].append(book)
          return jsonify(booklist), 200
       return jsonify({"Message": "Empty List"})

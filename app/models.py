@@ -46,6 +46,7 @@ class Book(db.Model):
     author = db.Column(db.String(), nullable = False)
     image = db.Column(db.String(), nullable = False)
     publishDate = db.Column(db.String(), nullable = False)
+    googleId = db.Column(db.String())
 
 
     def commit(self):
@@ -112,11 +113,12 @@ class BookHistory(db.Model):
     index = db.Column(db.Integer(), primary_key = True)
     userId = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
     bookId = db.Column(db.Integer(), db.ForeignKey('book.id'), nullable = False)
-    rating = db.Column(db.Integer(),  nullable = False)
+    rating = db.Column(db.Integer(),  nullable = True)
     review = db.Column(db.String(10000), nullable = True)
 
     def updateRating(self, rating):
-        self.stars = 0 if rating < 0 else rating if rating <=10 else 10
+        if rating <= 10 and rating >= 0:
+            self.rating = rating
         self.commit();
     
     def updateReview(self, reviewString):
