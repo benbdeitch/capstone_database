@@ -9,6 +9,7 @@ from app.models import User
 def register():
     content, response = request.json, {}
     print(content)
+    content["username"] = content["username"].strip()
     if User.query.filter_by(email=content['email']).first():
       response['email error']=f'{content["email"]} is already taken/ Try again'
     if User.query.filter_by(username=content['username']).first():
@@ -31,7 +32,7 @@ def register():
 #Accepts a request with {"username": <user's username>, "password": <user's password>}. Returns an access token that is used for verification by JWT. 
 @api.post('/signin')
 def sign_in():
-   username, password = request.json.get('username'), request.json.get('password')
+   username, password = request.json.get('username').strip(), request.json.get('password')
    user = User.query.filter_by(username=username).first()
    if user and user.check_password(password):
       access_token = create_access_token(identity=username)

@@ -90,3 +90,19 @@ def add_to_database(googleId):
     book = Book(title = data["volumeInfo"]["title"], author = data["volumeInfo"]["authors"][0] if "authors" in data["volumeInfo"].keys() else None, image = data["volumeInfo"]["imageLinks"]["thumbnail"] if "imageLinks" in data["volumeInfo"].keys() else None, publishDate = data["volumeInfo"]["publishedDate"] if "publishedDate" in data["volumeInfo"].keys() else None, googleId = googleId)
     book.commit()
     return book
+
+
+@api.get('/book/<googleId>')
+@jwt_required()
+def get_book_by_google_id(googleId):
+   data = requests.get(F'https://www.googleapis.com/books/v1/volumes/{googleId}').json()
+   if "error" in data.keys():
+        return jsonify({"Error": "Book id {googleId} not found."}), 400
+   else: 
+
+         book = {"googleId": data["id"],
+                "title": data["volumeInfo"]["title"],
+                "author":data["volumeInfo"]["authors"][0] if "authors" in data["volumeInfo"].keys() else "Unknown",
+                "publishDate": data["volumeInfo"]["publishedDate"] if "publishedDate" in data["volumeInfo"].keys() else "No Date",
+                "image":data["volumeInfo"]["imageLinks"]["thumbnail"] if "imageLinks" in data["volumeInfo"].keys() else "No Image"}
+         return jsonify(book),200

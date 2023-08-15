@@ -36,9 +36,9 @@ def add_to_history():
         book =add_to_database(googleId)
         if not book:
             return jsonify({"Error": f'Book id "{googleId}" could not be found.'}), 400
-    entry_in_list = BookList.query.filter_by(userId = user.id, bookId = book.id).first()
-    if entry_in_list:
-        entry_in_list.delete()
+    entry_in_history = BookHistory.query.filter_by(userId = user.id, bookId = book.id).first()
+    if entry_in_history:
+        return jsonify({"Error": f'Book {book.title} is already in list.'})
     history_entry = BookHistory(userId = user.id, bookId = book.id, rating = rating, review = review)
     history_entry.commit()
     return jsonify({"Success": f'Book {book.title} added to reading history. '}), 200

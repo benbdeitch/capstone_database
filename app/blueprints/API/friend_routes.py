@@ -40,9 +40,14 @@ def make_friend_request():
      
 
 #Route for accepting a friend request from a user. Fails if there is no pending request from that user to accept.
-@api.get('accept-<friend>-request')
+@api.post('accept-request')
 @jwt_required()
-def accept_request(friend):
+def accept_request():
+    data = request.json
+    try: 
+        friend = data["username"]
+    except:
+        return jsonify({"Error": "Incorrectly formatted request"}), 400
     username = get_jwt_identity()
     user = User.query.filter_by(username = username).first()
     if user:
@@ -62,11 +67,34 @@ def accept_request(friend):
     return jsonify({"Error": "User's authentication failed. Please log in, and try again."}), 400
 
 
+#Route for declining a sent friend request.
+@api.post('/decline-request')
+@jwt_required()
+def decline_request():
+    data = request.json
+    try: 
+        friend = data["username"]
+    except:
+        return jsonify({"Error": "Incorrectly formatted request"}), 400
+    username = get_jwt_identity()
+    user = User.query.filter_by(username = username).first()
+    if user:
+        friendUser = User.query.filter_by(username = friend).first()
+        if friendUser:
+            activeRequest = FriendRequest.query.filter_by(fromUser = friendUser.id, toUser = user.id).first()
+            if activeRequest:
+                activeRequest.delete()
+                return jsonify({"Success": f'Denied user request from {friend}'}), 200
+            return jsonify({"Error": f'No active request from {friend}'}),400
+        return jsonify({"Error": f'No user named {friend} found.'}),400
+    return jsonify({"Error": "Login credentials invalid."}),400
+
 #Returns a list of all friends that you have. Returns in the form of {"friends": <array of friend objects>}
 #Friend objects, here, are {"username": <friend's username>, "email": <friend's email>}
 @api.get('/all-friends')
 @jwt_required()
 def get_all_friends():
+    print("Getting Friends")
     response = {"friends": []}
     username = get_jwt_identity();
     user = User.query.filter_by(username = username).first()
@@ -135,10 +163,49 @@ def remove_friend():
         if friend:
             lowerId  = user.id if (user.id < friendUser.id) else friendUser.id
             higherId = user.id if lowerId == friendUser.id else friendUser.id
-            isFriend = User.query.filter_by(userIdLower = lowerId, userIdHigher = higherId).first()
+            isFriend = FriendList.query.filter_by(userIdLower = lowerId, userIdHigher = higherId).first()
             if isFriend:
                 isFriend.delete()
                 return jsonify({"Success": f'You are no longer friends with {friend}'}), 400
             return jsonify({"Error": f'Cannot remove {friend} from friends; you aren\'t friends with them in the first place.'}), 400
         return jsonify({"Error": f'Cannot find user "{friend}"'}), 400
     return jsonify({"Error": "Cannot access account, please ensure that you are logged in."})
+
+
+
+@api.get('/isfriend/<other_user>')
+@jwt_required()
+def is_friend(other_user):
+    username = get_jwt_identity()
+    user= User.query.filter_by(username = username).first()
+    friend = User.query.filter_by(username = other_user).first()
+    if not friend:
+        return jsonify({"Error": f'No such user "{friend}", exists.'}), 400
+    if user.id < friend.id:
+        lower_id, higher_id = user.id, friend.id
+    else:
+        lower_id, higher_id = friend.id, user.id
+    isFriend = FriendList.query.filter_by(userIdLower = lower_id, userIdHigher = higher_id).first()
+    if isFriend:
+        return jsonify({"status": "friend"}), 200
+    hasRequest = FriendRequest.query.filter_by(fromUser = user.id, toUser = friend.id).first()
+    if hasRequest:
+        return jsonify({"status": "requestMade"}), 200
+    madeRequest = FriendRequest.query.filter_by(toUser = user.id, fromUser = friend.id).first()
+    if madeRequest:
+        return jsonify({"status": "madeRequest"}),200
+    return jsonify({"status": "none"})
+
+
+
+@api.get('/friend-requests')
+@jwt_required()
+def get_all_requests():
+    username = get_jwt_identity()
+    user = User.query.filter_by(username = username).first()
+    requests =  FriendRequest.query.filter_by(toUser = user.id).all()
+    response = {"requests": []}
+    for query in requests:
+        other_user = User.query.filter_by(id = query.fromUser).first()
+        response["requests"].append(other_user.username)
+    return jsonify(response), 200
