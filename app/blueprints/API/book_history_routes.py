@@ -26,7 +26,13 @@ def add_to_history():
     if "rating" not in data.keys():
         rating = None;
     else:
+        
         rating = data["rating"]
+        if rating<0:
+            rating = 0;
+        if rating>10: 
+            rating = 10;
+
     if "review" not in data.keys():
         review =  None;
     else:

@@ -46,7 +46,7 @@ def get_my_recommendations():
     response = {"recommendations": []}
     for query in recommendations:
         from_name = User.query.filter_by(id = query.fromId).first()
-        response["recommendations"].append({"from": from_name.username, "title": query.title, "author": query.author, "message": query.shortMessage, "publishDate": query.publishDate, "image": query.image, "requestId": query.index})
+        response["recommendations"].append({"from": from_name.username, "title": query.title, "author": query.author, "message": query.shortMessage, "publishDate": query.publishDate, "image": query.image, "requestId": query.index, "googleId":query.googleId})
     return jsonify(response), 200
 
 
