@@ -63,8 +63,11 @@ class BookRequests(db.Model):
     toId = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
     bookId = db.Column(db.Integer(), db.ForeignKey('book.id'), nullable = False)
     shortMessage = db.Column(db.String(300), nullable = True)
-    
+    date = db.Column(db.Date(), nullable = False)
+
+
     def commit(self):
+        self.date = date.today()
         db.session.add(self)
         db.session.commit()
 
@@ -80,10 +83,10 @@ class BookList(db.Model):
     userId = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
     bookId = db.Column(db.Integer(), db.ForeignKey('book.id'), nullable = False)
     priority = db.Column(db.Integer())
-    dateAdded = db.Column(db.Date(), nullable = False)
+    date = db.Column(db.Date(), nullable = False)
 
     def commit(self):
-        self.dateAdded = date.today()
+        self.date = date.today()
         db.session.add(self)
         db.session.commit()
 
@@ -115,6 +118,7 @@ class BookHistory(db.Model):
     bookId = db.Column(db.Integer(), db.ForeignKey('book.id'), nullable = False)
     rating = db.Column(db.Integer(),  nullable = True)
     review = db.Column(db.String(10000), nullable = True)
+    date = db.Column(db.Date(), nullable = False)
 
     def updateRating(self, rating):
         if rating <= 10 and rating >= 0:
@@ -125,6 +129,7 @@ class BookHistory(db.Model):
         self.review = reviewString;
         self.commit();
     def commit(self):
+        self.date= date.today()
         db.session.add(self)
         db.session.commit()
 
@@ -154,9 +159,10 @@ class FriendList(db.Model):
     index = db.Column(db.Integer(), primary_key = True)
     userIdLower = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
     userIdHigher = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
-
+    date = db.Column(db.Date(), nullable = False)
 
     def commit(self):
+        self.date = date.today()
         db.session.add(self)
         db.session.commit()
 
@@ -169,10 +175,11 @@ class FriendRequest(db.Model):
     index = db.Column(db.Integer(), primary_key = True)
     toUser = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
     fromUser = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
-
+    date = db.Column(db.Date(), nullable = False)
 
 
     def commit(self):
+        self.date= date.today()
         db.session.add(self)
         db.session.commit()
 

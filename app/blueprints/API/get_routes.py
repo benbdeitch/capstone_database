@@ -26,12 +26,12 @@ def get_book_list():
    user = User.query.filter_by(username = username).first()
    if user:
       booklist = {"books":[]}
-      list = db.session.query(Book.id, Book.googleId, Book.title, Book.author, Book.publishDate, Book.image, BookList.priority).join(Book, BookList.bookId == Book.id).filter(BookList.userId == user.id).all()
+      list = db.session.query(BookList.date, Book.id, Book.googleId, Book.title, Book.author, Book.publishDate, Book.image, BookList.priority).join(Book, BookList.bookId == Book.id).filter(BookList.userId == user.id).all()
 
       if list:
          print(list)
          for i in range(len(list)):
-            book = {"title": list[i].title,
+            book = {"date": list[i].date, "title": list[i].title,
                  "author": list[i].author,
                  "publishDate":  list[i].publishDate,
                   "image": list[i].image,

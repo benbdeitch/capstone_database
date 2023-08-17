@@ -36,7 +36,7 @@ def add_to_history():
     if "review" not in data.keys():
         review =  None;
     else:
-        review = data["review"]
+        review = data["review"][0:10000]
     book = Book.query.filter_by(googleId = googleId).first()
     if not book:
         book =add_to_database(googleId)
@@ -59,9 +59,9 @@ def get_history(other_user):
     user = User.query.filter_by(username = username).first()
     if username == other_user:
          response = {"history": []}
-         history = db.session.query(Book.id, Book.title, Book.author, Book.googleId, Book.publishDate, Book.image, BookHistory.review, BookHistory.rating).join(Book, BookHistory.bookId == Book.id).filter(BookHistory.userId== user.id).all()
+         history = db.session.query(Book.id, Book.title, Book.author, Book.googleId, Book.publishDate, Book.image, BookHistory.date, BookHistory.review, BookHistory.rating).join(Book, BookHistory.bookId == Book.id).filter(BookHistory.userId== user.id).all()
          for query in history:
-             book_review = {"title": query.title, "author": query.author, "googleId": query.googleId, "publishDate": query.publishDate, "image": query.image, "review": query.review, "rating": query.rating}
+             book_review = {"date": query.date, "title": query.title, "author": query.author, "googleId": query.googleId, "publishDate": query.publishDate, "image": query.image, "review": query.review, "rating": query.rating}
              response["history"].append(book_review)
          return jsonify(response), 200
     user = User.query.filter_by(username = username).first()
@@ -75,9 +75,9 @@ def get_history(other_user):
     if not is_friend:
         return jsonify({"Error": f'Cannot access the reading list of {searchee.username} without being friends.'}), 400
     response = {"history": []}
-    history = db.session.query(Book.id, Book.title, Book.author, Book.googleId, Book.publishDate, Book.image, BookHistory.review, BookHistory.rating).join(Book, BookHistory.bookId == Book.id).filter(BookHistory.userId== searchee.id).all()
+    history = db.session.query(BookHistory.date, Book.id, Book.title, Book.author, Book.googleId, Book.publishDate, Book.image, BookHistory.review, BookHistory.rating).join(Book, BookHistory.bookId == Book.id).filter(BookHistory.userId== searchee.id).all()
     for query in history:
-        book_review = {"title": query.title, "author": query.author, "googleId": query.googleId, "publishDate": query.publishDate, "image": query.image, "review": query.review, "rating": query.rating}
+        book_review = {"date": query.date, "title": query.title, "author": query.author, "googleId": query.googleId, "publishDate": query.publishDate, "image": query.image, "review": query.review, "rating": query.rating}
         response["history"].append(book_review)
     return jsonify(response), 200
         

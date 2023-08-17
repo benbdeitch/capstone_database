@@ -16,7 +16,7 @@ def recommend_book():
     try: 
         target_user = data["toUsername"]
         google_id = data["googleId"]
-        message = data["message"]
+        message = data["message"][0:300]
 
     except:
         return jsonify({"Error": "Improperly formatted request."}), 400
@@ -40,13 +40,13 @@ def recommend_book():
 def get_my_recommendations():
     username = get_jwt_identity()
     user = User.query.filter_by(username = username).first()
-    recommendations = db.session.query(Book.id, Book.title, Book.author, Book.googleId, Book.publishDate, Book.image, BookRequests.toId, BookRequests.fromId, BookRequests.shortMessage, BookRequests.index).join(Book, BookRequests.bookId == Book.id).filter(BookRequests.toId == user.id).all()
+    recommendations = db.session.query(Book.id, Book.title, Book.author, Book.googleId, Book.publishDate, Book.image, BookRequests.toId, BookRequests.fromId, BookRequests.shortMessage, BookRequests.date, BookRequests.index).join(Book, BookRequests.bookId == Book.id).filter(BookRequests.toId == user.id).all()
 
   
     response = {"recommendations": []}
     for query in recommendations:
         from_name = User.query.filter_by(id = query.fromId).first()
-        response["recommendations"].append({"from": from_name.username, "title": query.title, "author": query.author, "message": query.shortMessage, "publishDate": query.publishDate, "image": query.image, "requestId": query.index, "googleId":query.googleId})
+        response["recommendations"].append({"date": query.date, "from": from_name.username, "title": query.title, "author": query.author, "message": query.shortMessage, "publishDate": query.publishDate, "image": query.image, "requestId": query.index, "googleId":query.googleId})
     return jsonify(response), 200
 
 

@@ -9,7 +9,7 @@ from app.models import User
 def register():
     content, response = request.json, {}
     print(content)
-    content["username"] = content["username"].strip()
+    content["username"] = content["username"].strip()[0:50]
     if User.query.filter_by(email=content['email']).first():
       response['email error']=f'{content["email"]} is already taken/ Try again'
     if User.query.filter_by(username=content['username']).first():
