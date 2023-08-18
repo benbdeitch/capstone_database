@@ -18,6 +18,7 @@ def search_book_from_google():
     title, author, how_many_entries = "", "", 10
     if "howManyEntries" in data.keys() and data["howManyEntries"]!= "" and data["howManyEntries"].isdecimal():
          amount_of_entries = int(data["howManyEntries"])
+    print(amount_of_entries)
     if "title" in data.keys() and data["title"]!=  "":
         title = '"' + data["title"] + '"'
     if "author" in data.keys() and data["author"]!= "":
