@@ -15,7 +15,9 @@ import requests
 @jwt_required()
 def search_book_from_google():
     data = request.json
-    title, author = "", ""
+    title, author, how_many_entries = "", "", 10
+    if "howManyEntries" in data.keys() and data["howManyEntries"]!= "" and data["howManyEntries"].isdecimal():
+         amount_of_entries = int(data["howManyEntries"])
     if "title" in data.keys() and data["title"]!=  "":
         title = '"' + data["title"] + '"'
     if "author" in data.keys() and data["author"]!= "":
@@ -36,7 +38,7 @@ def search_book_from_google():
                 "publishDate": entry["volumeInfo"]["publishedDate"] if "publishedDate" in entry["volumeInfo"].keys() else "No Date",
                 "image": entry["volumeInfo"]["imageLinks"]["thumbnail"] if "imageLinks" in entry["volumeInfo"].keys() else "No Image"}
         found_books["books"].append(book)
-        if len(found_books["books"]) > 10:
+        if len(found_books["books"]) > how_many_entries or len(found_books["books"]) > 29:
             break;
     
     return jsonify(found_books), 200
