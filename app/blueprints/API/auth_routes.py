@@ -2,6 +2,7 @@ from flask import request, jsonify
 from flask_jwt_extended import create_access_token, unset_jwt_cookies
 from . import bp as api
 from app.models import User
+import re 
 
 #accepts a request with {"username": <desired username>, "password": <desired password>, "email": <desired email address>}. If username or email are shared with a pre-existing user, no account will be created.
 #Returns an access token, as though the user just signed in.
@@ -9,15 +10,26 @@ from app.models import User
 def register():
     content, response = request.json, {}
     print(content)
-    content["username"] = content["username"].strip()[0:50]
+    valid = True;
+    content["username"] = content["username"].strip()[0:30]
     if User.query.filter_by(email=content['email']).first():
       response['email error']=f'{content["email"]} is already taken/ Try again'
+      valid = False;
     if User.query.filter_by(username=content['username']).first():
       response['username error']=f'{content["username"]} is already taken/ Try again'
+      valid = False;
     if 'password' not in content:
        response['message'] = "Please include password"
-    
-    try:
+       valid;
+    allow_username= re.compile('^[A-Za-z0-9_]{5,30}$')
+    if not allow_username.search(content['username']):
+      response['username validity error'] = f'{content["username"]} is an invalid username. Please pick a username that is only letters, numbers, and underscores, and is between 5-30 characters in length.'
+      valid = False;
+    allow_email=re.compile('[a-z0-9]+@[a-z]+\.[a-z]{2,3}');
+    if not allow_email.search(content['email']):
+       response['email validity error'] = f'Please enter a valid email.'
+       valid = False;
+    if valid:
         u = User(username = content["username"], email = content["email"])
         print(u)
         
@@ -25,7 +37,7 @@ def register():
         u.commit()
         access_token = create_access_token(identity = content["username"])
         return jsonify({'Success': f'User account created for {u.username}.', "access_token": str(access_token)})
-    except:
+    else:
         return jsonify(response), 400
     
 
