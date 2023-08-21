@@ -25,9 +25,9 @@ def register():
     if not allow_username.search(content['username']):
       response['username validity error'] = f'{content["username"]} is an invalid username. Please pick a username that is only letters, numbers, and underscores, and is between 5-30 characters in length.'
       valid = False;
-    allow_email=re.compile('[a-z0-9]+@[a-z]+\.[a-z]{2,3}');
+    allow_email=re.compile('^[a-z0-9]+@[a-z]+\.[a-z]{2,3}$');
     if not allow_email.search(content['email']):
-       response['email validity error'] = f'Please enter a valid email.'
+       response['email validity error'] = f'{content["email"]} is an invalid email.'
        valid = False;
     if valid:
         u = User(username = content["username"], email = content["email"])
