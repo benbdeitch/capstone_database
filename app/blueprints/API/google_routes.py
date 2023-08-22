@@ -30,7 +30,7 @@ def search_book_from_google():
         return jsonify({"Error": "Request cannot be carried out, without at least one value for author or title."}), 400
     string = 'https://www.googleapis.com/books/v1/volumes?q=' + f'{"intitle:"  + title if title!= "" else "" }'
     string = string + f'{"inauthor:" + author if author!= "" else ""}'
-    string = string + "&fields=totalItems,items/volumeInfo/title,items/volumeInfo/authors,items/volumeInfo/publishedDate,items/volumeInfo/imageLinks/thumbnail"
+    string = string + "&fields=totalItems,items/volumeInfo/title,items/volumeInfo/authors,items/volumeInfo/publishedDate,items/volumeInfo/imageLinks/thumbnail, items/id"
     string = string + f'&key={Config.GOOGLE_API_KEY}'
     data = requests.get(string).json()
     if data["totalItems"] == 0:
