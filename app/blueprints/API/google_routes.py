@@ -1,3 +1,4 @@
+from datetime import date
 from flask import request, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from . import bp as api
@@ -64,11 +65,11 @@ def add_book_list():
     username = get_jwt_identity();
     user = User.query.filter_by(username = username).first()
     if "priority" not in data.keys():
-            priority = 0
+            priority = generate_priority(user.id)
     elif data["priority"].isdecimal():
             priority = int(data["priority"])
     else:
-            priority = 0
+            priority = generate_priority(user.id)
     alreadyHave = Book.query.filter_by(googleId = googleId).first()
     title = ""
     if alreadyHave:
@@ -83,7 +84,7 @@ def add_book_list():
     alreadyInList = BookList.query.filter_by(userId = user.id, bookId = bookId).first()
     if alreadyInList:
          return jsonify({"Error": f'Book {title} already in user\'s reading list.'}), 400
-    new_list = BookList(userId = user.id, bookId = bookId, priority = priority)
+    new_list = BookList(userId = user.id, bookId = bookId, priority = priority, date = date.today())
     new_list.commit();
     return jsonify({"Success": f'Book {title} successfully added.'}),200
     
@@ -113,3 +114,8 @@ def get_book_by_google_id(googleId):
                 "publishDate": data["volumeInfo"]["publishedDate"] if "publishedDate" in data["volumeInfo"].keys() else "No Date",
                 "image":data["volumeInfo"]["imageLinks"]["thumbnail"] if "imageLinks" in data["volumeInfo"].keys() else "No Image"}
          return jsonify(book),200
+
+
+def generate_priority(user_id):
+     list_number = BookList.query.filter_by(userId = user_id).all()
+     return list_number.length()
