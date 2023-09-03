@@ -1,7 +1,8 @@
 from flask import request, jsonify
 from flask_jwt_extended import create_access_token, unset_jwt_cookies
 from . import bp as api
-from app.models import User
+from app.models import User, BookList, Book
+from app import db
 import re 
 
 #accepts a request with {"username": <desired username>, "password": <desired password>, "email": <desired email address>}. If username or email are shared with a pre-existing user, no account will be created.
@@ -48,6 +49,8 @@ def sign_in():
    user = User.query.filter_by(username=username).first()
    if user and user.check_password(password):
       access_token = create_access_token(identity=username)
+      reading_list = db.session.query(BookList.dateAdded, Book.id, Book.googleId, Book.title, Book.author, Book.publishDate, Book.image, BookList.priority).join(Book, BookList.bookId == Book.id).filter(BookList.userId == user.id).all()
+      print(reading_list)
       return jsonify({'access_token':access_token}), 200
    else:
       return jsonify({'Error':'Invalid Username or Password / Try Again'}), 400

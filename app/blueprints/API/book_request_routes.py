@@ -1,3 +1,4 @@
+from datetime import date
 from flask import request, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from . import bp as api
@@ -29,7 +30,7 @@ def recommend_book():
                 return jsonify({"Error": "No book found"}), 401
             bookId = book.id
             title = book.title
-        new_request = BookRequests(toId = recipient.id, fromId =from_user.id, shortMessage = message, bookId = book.id)
+        new_request = BookRequests(toId = recipient.id, fromId =from_user.id, shortMessage = message, bookId = book.id, date = date.today())
         new_request.commit()
         return jsonify({"Success": f'Book {book.title} recommended to {target_user}.'}), 200
     return jsonify({"Error": f'User {target_user} not found in database. '})
@@ -64,7 +65,7 @@ def accept_recommendation():
         return jsonify({"Error": f'Recommendation #{data["index"]} does not exist.'})
     if rec.toId != user.id:
         return jsonify({"Error": f'Request #{data["index"]} is not associated with your account.'}), 400
-    book_to_read = BookList(userId = user.id, bookId = rec.bookId)
+    book_to_read = BookList(userId = user.id, bookId = rec.bookId, recommendedBy= rec.fromId)
     book_to_read.commit()
     rec.delete() 
     return jsonify({"Success": "Recommendation accepted."})

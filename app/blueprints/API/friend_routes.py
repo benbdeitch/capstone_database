@@ -1,3 +1,4 @@
+from datetime import date
 from . import bp as api
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from app.models import User, FriendRequest, FriendList, Book, BookList
@@ -30,7 +31,7 @@ def make_friend_request():
             alreadyFriends = FriendList.query.filter_by(userIdLower = lowerId, userIdHigher = higherId).first()
             if alreadyFriends:
                 return jsonify({"Error": f'You are already friends with {friend}'})
-            newRequest = FriendRequest(toUser = toUser.id, fromUser = user.id)
+            newRequest = FriendRequest(toUser = toUser.id, fromUser = user.id, date = date.today())
             newRequest.commit()
             return jsonify({"Success": f'Friend request has been sent to {friend}.'}), 200
          else:
@@ -57,7 +58,7 @@ def accept_request():
             if isValidRequest:
                 lowerId  = user.id if (user.id < friendUser.id) else friendUser.id
                 higherId = user.id if lowerId == friendUser.id else friendUser.id
-                newFriendRelation = FriendList(userIdLower = lowerId, userIdHigher = higherId)
+                newFriendRelation = FriendList(userIdLower = lowerId, userIdHigher = higherId, date = date.today())
                 newFriendRelation.commit()
                 isValidRequest.delete()
 
@@ -108,7 +109,7 @@ def get_all_friends():
     
     for id in friend_id_list:
         friend = User.query.filter_by(id = id).first()
-        response["friends"].append({"username": friend.username, "email": friend.email})
+        response["friends"].append({"username": friend.username, "email": friend.email, "date": friend.date})
     return jsonify(response), 200
 
 
