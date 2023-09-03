@@ -128,7 +128,6 @@ class BookHistory(db.Model):
         self.review = reviewString;
         self.commit();
     def commit(self):
-        self.date= date.today()
         db.session.add(self)
         db.session.commit()
 

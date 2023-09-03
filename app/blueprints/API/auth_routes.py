@@ -1,7 +1,10 @@
 from flask import request, jsonify
 from flask_jwt_extended import create_access_token, unset_jwt_cookies
+from sqlalchemy import or_
+
+from app.blueprints.API.helper_functions import get_account_data
 from . import bp as api
-from app.models import User, BookList, Book
+from app.models import FriendList, User, BookList, Book
 from app import db
 import re 
 
@@ -42,23 +45,25 @@ def register():
         return jsonify(response), 400
     
 
-#Accepts a request with {"username": <user's username>, "password": <user's password>}. Returns an access token that is used for verification by JWT. 
+#Accepts a request with {"username": <user's username>, "password": <user's password>}. Returns an access token that is used for verification by JWT, along with the other information used by the program.
 @api.post('/signin')
 def sign_in():
    username, password = request.json.get('username').strip(), request.json.get('password')
    user = User.query.filter_by(username=username).first()
    if user and user.check_password(password):
+      response = get_account_data(user)
       access_token = create_access_token(identity=username)
-      reading_list = db.session.query(BookList.dateAdded, Book.id, Book.googleId, Book.title, Book.author, Book.publishDate, Book.image, BookList.priority).join(Book, BookList.bookId == Book.id).filter(BookList.userId == user.id).all()
-      print(reading_list)
       return jsonify({'access_token':access_token}), 200
    else:
       return jsonify({'Error':'Invalid Username or Password / Try Again'}), 400
 
 
+
+   
 #Requires no input, and unsets the Access Token you were using. 
 @api.post('/logout')
 def logout():
    response = jsonify({'Success':'Successful Logout'})
    unset_jwt_cookies(response)
    return response
+

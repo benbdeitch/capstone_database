@@ -7,7 +7,7 @@ from app import db
 
 
 #This method is used for updating the 'priority' of books in the booklist. It accepts a list of objects with two keys, "googleID", and "priority". It sets the priority value of each book with matching googleID to the appropriate priority, which will be used in displaying them in order, on the webpage. 
-@api.post('/update_priority')
+@api.put('/update_priority')
 @jwt_required()
 def update_priority():
     data = request.json

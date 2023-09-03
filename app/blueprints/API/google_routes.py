@@ -84,7 +84,7 @@ def add_book_list():
     alreadyInList = BookList.query.filter_by(userId = user.id, bookId = bookId).first()
     if alreadyInList:
          return jsonify({"Error": f'Book {title} already in user\'s reading list.'}), 400
-    new_list = BookList(userId = user.id, bookId = bookId, priority = priority, date = date.today())
+    new_list = BookList(userId = user.id, bookId = bookId, priority = priority, dateAdded = date.today())
     new_list.commit();
     return jsonify({"Success": f'Book {title} successfully added.'}),200
     
@@ -118,4 +118,4 @@ def get_book_by_google_id(googleId):
 
 def generate_priority(user_id):
      list_number = BookList.query.filter_by(userId = user_id).all()
-     return list_number.length()
+     return len(list_number)
