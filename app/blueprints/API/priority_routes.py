@@ -11,10 +11,12 @@ from app import db
 @jwt_required()
 def update_priority():
     data = request.json
-    user = get_jwt_identity()
+    username = get_jwt_identity()
+    user = User.query.filter_by(username = username).first()
     if data.get("items"):
-        user_book_list = db.session.query(Book.id,  Book.googleId, BookList.bookId).join(Book, BookList.bookId == Book.id).filter(BookList.userId == user.id).all()
+        user_book_list = BookList.query.filter_by(userId = user.id).all()
         print (user_book_list)
         #for book in data["items"]:
+        return jsonify({"Success":"Hello"})
     else:
         return jsonify({"Error": "Invalid request made"}), 400

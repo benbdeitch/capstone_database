@@ -83,8 +83,8 @@ class BookList(db.Model):
     userId = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = False)
     bookId = db.Column(db.Integer(), db.ForeignKey('book.id'), nullable = False)
     priority = db.Column(db.Integer())
-    date = db.Column(db.Date(), nullable = False)
-
+    dateAdded = db.Column(db.Date(), nullable = False)
+    recommendedBy = db.Column(db.Integer(), db.ForeignKey('user.id'), nullable = True)
     def commit(self):
         db.session.add(self)
         db.session.commit()
