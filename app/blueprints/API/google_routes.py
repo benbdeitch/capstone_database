@@ -1,6 +1,7 @@
 from datetime import date
 from flask import request, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
+from sqlalchemy import func
 from . import bp as api
 from app.models import User, BookList, Book, BookRequests
 from app import db
@@ -117,5 +118,5 @@ def get_book_by_google_id(googleId):
 
 
 def generate_priority(user_id):
-     list_number = BookList.query.filter_by(userId = user_id).all()
-     return len(list_number)
+     return db.session.query(func.max(BookList.priority)).filter_by(userId = user_id).scalar() +1
+   
