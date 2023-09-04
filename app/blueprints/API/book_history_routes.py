@@ -1,4 +1,5 @@
 
+from datetime import date
 from flask import request, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from . import bp as api
@@ -28,9 +29,9 @@ def add_to_history():
     else:
         
         rating = data["rating"]
-        if rating<0:
+        if int(rating)<0:
             rating = 0;
-        if rating>10: 
+        if float(rating)>int(10): 
             rating = 10;
 
     if "review" not in data.keys():
@@ -45,8 +46,11 @@ def add_to_history():
     entry_in_history = BookHistory.query.filter_by(userId = user.id, bookId = book.id).first()
     if entry_in_history:
         return jsonify({"Error": f'Book {book.title} is already in list.'})
-    history_entry = BookHistory(userId = user.id, bookId = book.id, rating = rating, review = review)
+    history_entry = BookHistory(userId = user.id, bookId = book.id, rating = rating, review = review, date = date.today())
     history_entry.commit()
+    entry_in_list = BookList.query.filter_by(userId = user.id, bookId = book.id).first()
+    if entry_in_list:
+        entry_in_list.delete()
     return jsonify({"Success": f'Book {book.title} added to reading history. '}), 200
         
 
