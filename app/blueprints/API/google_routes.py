@@ -65,12 +65,9 @@ def add_book_list():
     googleId = data["googleId"]
     username = get_jwt_identity();
     user = User.query.filter_by(username = username).first()
-    if "priority" not in data.keys():
-            priority = generate_priority(user.id)
-    elif data["priority"].isdecimal():
-            priority = int(data["priority"])
-    else:
-            priority = generate_priority(user.id)
+
+    priority =  db.session.query(func.max(BookList.priority)).filter_by(userId = user.id).scalar() +1 if db.session.query(func.max(BookList.priority)).filter_by(userId = user.id).scalar() else 1
+   
     alreadyHave = Book.query.filter_by(googleId = googleId).first()
     title = ""
     if alreadyHave:
@@ -116,7 +113,3 @@ def get_book_by_google_id(googleId):
                 "image":data["volumeInfo"]["imageLinks"]["thumbnail"] if "imageLinks" in data["volumeInfo"].keys() else "No Image"}
          return jsonify(book),200
 
-
-def generate_priority(user_id):
-     return db.session.query(func.max(BookList.priority)).filter_by(userId = user_id).scalar() +1
-   
