@@ -1,3 +1,4 @@
+from flask_jwt_extended import create_access_token
 from sqlalchemy import or_
 from app import db
 from app.models import Book, BookHistory, BookList, BookRequests, FriendList, User
@@ -6,7 +7,7 @@ from app.models import Book, BookHistory, BookList, BookRequests, FriendList, Us
 #This function is for swiftly accessing the majority of the account's information. It is used when initially loading the webpage, and when manually refreshing it, to handle desyncs between the browser and database. 
 def get_account_data(user):
    #Setting up the initial response
-   response = {'username': '', 'token':'', 'friends':{}, 'friendRequests': [], 'readingList':[], 'readingHistory':[], 'my_recommendations':[]}
+   response = {'username': user.username, 'token': create_access_token(identity=user.username), 'friends':{}, 'friendRequests': [], 'readingList':[], 'readingHistory':[], 'my_recommendations':[]}
 
 
     #Accessing the user's reading list. 
