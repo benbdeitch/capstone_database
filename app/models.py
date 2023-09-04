@@ -67,7 +67,7 @@ class BookRequests(db.Model):
 
 
     def commit(self):
-        self.date = date.today()
+
         db.session.add(self)
         db.session.commit()
 

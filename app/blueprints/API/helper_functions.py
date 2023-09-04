@@ -1,12 +1,12 @@
 from sqlalchemy import or_
 from app import db
-from app.models import Book, BookHistory, BookList, FriendList, User
+from app.models import Book, BookHistory, BookList, BookRequests, FriendList, User
 
 
 #This function is for swiftly accessing the majority of the account's information. It is used when initially loading the webpage, and when manually refreshing it, to handle desyncs between the browser and database. 
 def get_account_data(user):
    #Setting up the initial response
-   response = {'username': '', 'token':'', 'friends':{}, 'friendRequests': [], 'readingList':[], 'readingHistory':[], }
+   response = {'username': '', 'token':'', 'friends':{}, 'friendRequests': [], 'readingList':[], 'readingHistory':[], 'my_recommendations':[]}
 
 
     #Accessing the user's reading list. 
@@ -30,4 +30,10 @@ def get_account_data(user):
       history = db.session.query(BookHistory.date, Book.id, Book.title, Book.author, Book.googleId, Book.publishDate, Book.image, BookHistory.review, BookHistory.rating).join(Book, BookHistory.bookId == Book.id).filter(BookHistory.userId== friend.id).all()
       for books in history:
           response["friends"][friend.username]["reading_history"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'author': books.author, 'publishDate': books.publishDate, 'image': books.image}, "review": books.review, "rating": books.rating, "date": books.date})
+    
+    #Accessing Recommendations: 
+   recommendations = db.session.query(BookRequests.fromId, Book.googleId, Book.title, Book.author, Book.image, Book.publishDate, BookRequests.toId, BookRequests.date, BookRequests.shortMessage, BookRequests.bookId, User.username).join(User, User.id == BookRequests.fromId).join(Book, Book.id == BookRequests.bookId).filter(BookRequests.toId == user.id).all()
+   for books in recommendations: 
+        response["my_recommendations"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'author': books.author, 'publishDate': books.publishDate, 'image': books.image}, 'from': books.username, 'msg': books.shortMessage, 'date': books.date} )
+   print(response)
    return response
