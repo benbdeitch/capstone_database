@@ -7,7 +7,7 @@ from app.models import Book, BookHistory, BookList, BookRequests, FriendList, Fr
 #This function is for swiftly accessing the majority of the account's information. It is used when initially loading the webpage, and when manually refreshing it, to handle desyncs between the browser and database. 
 def get_account_data(user):
    #Setting up the initial response
-   response = {'username': user.username, 'token': create_access_token(identity=user.username), 'friends':{}, 'friendRequests': [], 'readingList':[], 'readingHistory':[], 'my_recommendations':[]}
+   response = { 'username': "", 'token': "", 'friends':{}, 'friendRequests': [], 'readingList':[], 'readingHistory':[], 'my_recommendations':[]}
 
 
     #Accessing the user's reading list. 

@@ -52,8 +52,9 @@ def sign_in():
    user = User.query.filter_by(username=username).first()
    if user and user.check_password(password):
       response = get_account_data(user)
-      access_token = create_access_token(identity=username)
-      return jsonify({'access_token':access_token}), 200
+      response["token"] = create_access_token(identity=username)
+      response["username"] = username
+      return jsonify(response), 200
    else:
       return jsonify({'Error':'Invalid Username or Password / Try Again'}), 400
 
