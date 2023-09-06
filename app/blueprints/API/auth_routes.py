@@ -16,6 +16,7 @@ def register():
     print(content)
     valid = True;
     content["username"] = content["username"].strip()[0:30]
+    content["email"] = content["email"].lower()
     if User.query.filter_by(email=content['email']).first():
       response['email error']=f'{content["email"]} is already taken/ Try again'
       valid = False;
@@ -54,6 +55,7 @@ def sign_in():
       response = get_account_data(user)
       response["token"] = create_access_token(identity=username)
       response["username"] = username
+      response["email"] = user.email
       return jsonify(response), 200
    else:
       return jsonify({'Error':'Invalid Username or Password / Try Again'}), 400
