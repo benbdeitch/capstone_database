@@ -29,13 +29,13 @@ def get_account_data(user):
 
       friend_reading_list = db.session.query(User.username, Book.googleId, Book.title, Book.author, Book.publishDate, Book.image, BookList.priority, BookList.dateAdded).join(Book, BookList.bookId == Book.id).outerjoin(User, BookList.recommendedBy == User.id ).filter(BookList.userId == friend.id).all()
       
-      response["friends"].update({friend.username: {"email": friend.email, "date": query.date, "reading_list": [], "reading_history": []}})
+      response["friends"].update({friend.username: {"email": friend.email, "date": query.date, "readingList": [], "readingHistory": []}})
       for books in friend_reading_list:
          
-          response["friends"][friend.username]["reading_list"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'author': books.author, 'publishDate': books.publishDate, 'image': books.image}, 'dateAdded': books.dateAdded, 'priority': books.priority, 'from':books.username })
+          response["friends"][friend.username]["readingList"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'author': books.author, 'publishDate': books.publishDate, 'image': books.image}, 'dateAdded': books.dateAdded, 'priority': books.priority, 'from':books.username })
       history = db.session.query(BookHistory.date, Book.id, Book.title, Book.author, Book.googleId, Book.publishDate, Book.image, BookHistory.review, BookHistory.rating).join(Book, BookHistory.bookId == Book.id).filter(BookHistory.userId== friend.id).all()
       for books in history:
-          response["friends"][friend.username]["reading_history"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'author': books.author, 'publishDate': books.publishDate, 'image': books.image}, "review": books.review, "rating": books.rating, "date": books.date})
+          response["friends"][friend.username]["readingHistory"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'author': books.author, 'publishDate': books.publishDate, 'image': books.image}, "review": books.review, "rating": books.rating, "date": books.date})
     
     #Accessing Recommendations: 
    recommendations = db.session.query(BookRequests.fromId, Book.googleId, Book.title, Book.author, Book.image, Book.publishDate, BookRequests.toId, BookRequests.date, BookRequests.shortMessage, BookRequests.bookId, User.username).join(User, User.id == BookRequests.fromId).join(Book, Book.id == BookRequests.bookId).filter(BookRequests.toId == user.id).all()
