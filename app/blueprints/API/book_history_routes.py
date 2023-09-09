@@ -86,7 +86,21 @@ def get_history(other_user):
     return jsonify(response), 200
         
 
-
+@api.delete('/history/delete')
+@jwt_required()
+def delete_history():
+    data = request.json
+    if not data["googleId"]:
+        return jsonify({"Error": "Invalid information provided."}), 400
+    username = get_jwt_identity()
+    user = User.query.filter_by(username = username).first()
+    book_id = Book.query.filter_by(googleId= data["googleId"]).first().id
+    review = BookHistory.query.filter_by(bookId = book_id, userId = user.id).first()
+    if review:
+        review.delete()
+        return jsonify({"Msg": "Entry Deleted"}),200
+    else:
+        return jsonify({"Error": f'No entry with id {data["googleId"]} found. '}), 400
 
 #helper function:
 def add_to_database(googleId):

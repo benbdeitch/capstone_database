@@ -204,9 +204,13 @@ def is_friend(other_user):
 def get_all_requests():
     username = get_jwt_identity()
     user = User.query.filter_by(username = username).first()
-    requests =  FriendRequest.query.filter_by(toUser = user.id).all()
-    response = {"requests": []}
+    requests =  FriendRequest.query.filter(or_(FriendRequest.toUser == user.id, FriendRequest.fromUser == user.id)).all()
+    response = {"requests": {"in":[], "out":[]}}
     for query in requests:
-        other_user = User.query.filter_by(id = query.fromUser).first()
-        response["requests"].append(other_user.username)
+        if query.toUser == user.id:
+            other_user = User.query.filter_by(id = query.fromUser).first()
+            response["requests"]["in"].append({'from': other_user.username, 'date': query.date})
+        else:
+            other_user = User.query.filter_by(id = query.toUser).first()
+            response["requests"]["out"].append({'from': other_user.username, 'date': query.date})
     return jsonify(response), 200
