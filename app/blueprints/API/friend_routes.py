@@ -212,5 +212,5 @@ def get_all_requests():
             response["requests"]["in"].append({'from': other_user.username, 'date': query.date})
         else:
             other_user = User.query.filter_by(id = query.toUser).first()
-            response["requests"]["out"].append({'from': other_user.username, 'date': query.date})
+            response["requests"]["out"].append({'to': other_user.username, 'date': query.date})
     return jsonify(response), 200
