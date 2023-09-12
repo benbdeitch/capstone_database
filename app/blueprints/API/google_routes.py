@@ -84,7 +84,7 @@ def add_book_list():
          return jsonify({"Error": f'Book {title} already in user\'s reading list.'}), 400
     new_list = BookList(userId = user.id, bookId = bookId, priority = priority, dateAdded = date.today())
     new_list.commit();
-    return jsonify({"Success": f'Book {title} successfully added.'}),200
+    return jsonify({"Success": f'Book {title} successfully added.', 'priority': priority}),200
     
 
 
