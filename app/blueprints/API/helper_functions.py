@@ -7,7 +7,7 @@ from app.models import Book, BookHistory, BookList, BookRequests, FriendList, Fr
 #This function is for swiftly accessing the majority of the account's information. It is used when initially loading the webpage, and when manually refreshing it, to handle desyncs between the browser and database. 
 def get_account_data(user):
    #Setting up the initial response
-   response = { 'username': "", 'token': "", 'email': "", 'friends':{}, 'friendRequests': {"in": [], "out":[]}, 'readingList':[], 'readingHistory':[], 'recommendations':[]}
+   response = { 'username': "", 'token': "", 'email': "", 'friends':{}, 'friendRequests': {"in": [], "out":[]}, 'readingList':[], 'readingHistory':[], 'recommendations':{'in': [], 'out': []}}
 
     #Accessing the user's reading list. 
    reading_list = db.session.query(BookList.dateAdded, Book.id, Book.googleId, Book.title, Book.author, Book.publishDate, Book.image, BookList.priority, User.username).outerjoin(User, BookList.recommendedBy == User.id).join(Book, BookList.bookId == Book.id).filter(BookList.userId == user.id).all()
@@ -37,12 +37,15 @@ def get_account_data(user):
       for books in history:
           response["friends"][friend.username]["readingHistory"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'author': books.author, 'publishDate': books.publishDate, 'image': books.image}, "review": books.review, "rating": books.rating, "date": books.date})
     
-    #Accessing Recommendations: 
+    #Accessing incoming Recommendations: 
    recommendations = db.session.query(BookRequests.fromId, Book.googleId, Book.title, Book.author, Book.image, Book.publishDate, BookRequests.toId, BookRequests.date, BookRequests.shortMessage, BookRequests.bookId, User.username).join(User, User.id == BookRequests.fromId).join(Book, Book.id == BookRequests.bookId).filter(BookRequests.toId == user.id).all()
    for books in recommendations: 
-        response["recommendations"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'author': books.author, 'publishDate': books.publishDate, 'image': books.image}, 'from': books.username, 'msg': books.shortMessage, 'date': books.date} )
+        response["recommendations"]["in"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'author': books.author, 'publishDate': books.publishDate, 'image': books.image}, 'from': books.username, 'msg': books.shortMessage, 'date': books.date} )
 
-
+    #accessing outgoing recommendations:
+   out_recommendations = db.session.query(BookRequests.fromId, Book.googleId, Book.title, Book.author, Book.image, Book.publishDate, BookRequests.toId, BookRequests.date, BookRequests.shortMessage, BookRequests.bookId, User.username).join(User, User.id == BookRequests.toId).join(Book, Book.id == BookRequests.bookId).filter(BookRequests.fromId == user.id).all()
+   for books in recommendations: 
+        response["recommendations"]["out"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'author': books.author, 'publishDate': books.publishDate, 'image': books.image}, 'to': books.username, 'msg': books.shortMessage, 'date': books.date} )
     #Accessing  incoming Friend Requests:
    inc_friend_requests =  db.session.query(FriendRequest.fromUser, FriendRequest.toUser, User.username, FriendRequest.date).join(FriendRequest, FriendRequest.fromUser == User.id).filter_by(toUser = user.id).all()
    for requests in inc_friend_requests:

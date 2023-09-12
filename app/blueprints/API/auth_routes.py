@@ -1,5 +1,5 @@
 from flask import request, jsonify
-from flask_jwt_extended import create_access_token, unset_jwt_cookies
+from flask_jwt_extended import create_access_token, jwt_required, unset_jwt_cookies
 from sqlalchemy import or_
 
 from app.blueprints.API.helper_functions import get_account_data
@@ -70,3 +70,7 @@ def logout():
    unset_jwt_cookies(response)
    return response
 
+@api.post('/check')
+@jwt_required()
+def check_token():
+   return jsonify({"msg": "Successful authentication"}), 200

@@ -44,11 +44,19 @@ def get_my_recommendations():
     recommendations = db.session.query(Book.id, Book.title, Book.author, Book.googleId, Book.publishDate, Book.image, BookRequests.toId, BookRequests.fromId, BookRequests.shortMessage, BookRequests.date, BookRequests.index).join(Book, BookRequests.bookId == Book.id).filter(BookRequests.toId == user.id).all()
 
   
-    response = {"recommendations": []}
-    for query in recommendations:
-        from_name = User.query.filter_by(id = query.fromId).first()
-        response["recommendations"].append({"date": query.date, "from": from_name.username, "title": query.title, "author": query.author, "message": query.shortMessage, "publishDate": query.publishDate, "image": query.image, "requestId": query.index, "googleId":query.googleId})
+    response = {"recommendations": {"in":[], "out":[]}}
+    
+      #Accessing incoming Recommendations: 
+    recommendations = db.session.query(BookRequests.fromId, Book.googleId, Book.title, Book.author, Book.image, Book.publishDate, BookRequests.toId, BookRequests.date, BookRequests.shortMessage, BookRequests.bookId, User.username).join(User, User.id == BookRequests.fromId).join(Book, Book.id == BookRequests.bookId).filter(BookRequests.toId == user.id).all()
+    for books in recommendations: 
+        response["recommendations"]["in"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'author': books.author, 'publishDate': books.publishDate, 'image': books.image}, 'from': books.username, 'msg': books.shortMessage, 'date': books.date} )
+
+    #accessing outgoing recommendations:
+    out_recommendations = db.session.query(BookRequests.fromId, Book.googleId, Book.title, Book.author, Book.image, Book.publishDate, BookRequests.toId, BookRequests.date, BookRequests.shortMessage, BookRequests.bookId, User.username).join(User, User.id == BookRequests.toId).join(Book, Book.id == BookRequests.bookId).filter(BookRequests.fromId == user.id).all()
+    for books in recommendations: 
+         response["recommendations"]["out"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'author': books.author, 'publishDate': books.publishDate, 'image': books.image}, 'to': books.username, 'msg': books.shortMessage, 'date': books.date} )
     return jsonify(response), 200
+
 
 
 

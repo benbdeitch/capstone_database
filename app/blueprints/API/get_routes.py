@@ -28,19 +28,14 @@ def get_book_list():
    user = User.query.filter_by(username = username).first()
    if user:
       booklist = {"books":[]}
-      reading_list = db.session.query(BookList.dateAdded, Book.id, Book.googleId, Book.title, Book.author, Book.publishDate, Book.image, BookList.priority).join(Book, BookList.bookId == Book.id).filter(BookList.userId == user.id).all()
-
+      reading_list = db.session.query(BookList.dateAdded, Book.id, Book.googleId, Book.title, Book.author, Book.publishDate, Book.image, BookList.priority, User.username).outerjoin(User, BookList.recommendedBy == User.id).join(Book, BookList.bookId == Book.id).filter(BookList.userId == user.id).all()
+   
       if reading_list:
          print(reading_list)
-         for i in range(len(reading_list)):
-            book = {"date": reading_list[i].dateAdded, "title": reading_list[i].title,
-                 "author": reading_list[i].author,
-                 "publishDate":  reading_list[i].publishDate,
-                  "image": reading_list[i].image,
-                  "priority": str(reading_list[i].priority),
-                  "id": str(i),
-                   "googleId": reading_list[i].googleId }
-            booklist["books"].append(book)
+         reading_list.sort(reverse = True, key =lambda item: item.priority)
+         for books in reading_list:
+            booklist['books'].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'author': books.author, 'publishDate': books.publishDate, 'image': books.image}, 'dateAdded': books.dateAdded, 'priority': books.priority, 'from':books.username })
+
          return jsonify(booklist), 200
       return jsonify({"Message": "Empty List"})
    return jsonify({"Error": "User Not Found"}), 400
