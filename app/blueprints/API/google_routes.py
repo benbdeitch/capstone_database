@@ -27,19 +27,19 @@ def search_book_from_google():
     if (title == "" and author == ""):
         return jsonify({"Error": "Request cannot be carried out if both author and title are left blank."}), 400
     if "startIndex" in data.keys():
-        start_index = data["startIndex"]
+        start_index = str(data["startIndex"])
     string = 'https://www.googleapis.com/books/v1/volumes?q=' + f'{"intitle:"  + title + "+" if title!= "" else "" }'
     string = string + f'{"inauthor:" + author + "+"  if author!= "" else ""}'
  
-    string = string + "&startIndex=" + start_index + "&fields=totalItems,items/volumeInfo/title,items/volumeInfo/authors,items/volumeInfo/publishedDate,items/volumeInfo/imageLinks/thumbnail,items/volumeInfo/imageLinks/smallThumbnail, items/id"
+    string = string + "&startIndex=" + start_index + "&fields=totalItems,items/volumeInfo/title,items/volumeInfo/authors,items/volumeInfo/publishedDate,items/volumeInfo/imageLinks/thumbnail,items/volumeInfo/imageLinks/smallThumbnail,items/id"
     string = string + f'&key={Config.GOOGLE_API_KEY}'
     data = requests.get(string).json()
-    
+
     print(data)
     if data["totalItems"] == 0:
         return jsonify({"Error": "No items found.", "code": 404}), 404
-    found_books = {"books": []}
-    print(data)
+    found_books = {"books": [], "totalItems": data["totalItems"]}
+   
     for entry in data["items"]:
         book = {"googleId": entry["id"],
                 "title": entry["volumeInfo"]["title"],
@@ -114,8 +114,9 @@ def get_book_by_google_id(googleId):
 
          book = {"googleId": data["id"],
                 "title": data["volumeInfo"]["title"],
+                "subtitle": data["volumeInfo"]["subtitle"],
                 "author":data["volumeInfo"]["authors"][0] if "authors" in data["volumeInfo"].keys() else "Unknown",
                 "publishDate": data["volumeInfo"]["publishedDate"] if "publishedDate" in data["volumeInfo"].keys() else "No Date",
-                "image":data["volumeInfo"]["imageLinks"]["thumbnail"] if "imageLinks" in data["volumeInfo"].keys() else "No Image"}
+                "image":{"img": data["volumeInfo"]["imageLinks"]["thumbnail"] if "imageLinks" in data["volumeInfo"].keys() else "No Image", "imgSml": data["volumeInfo"]["imageLinks"]["smallThumbnail"] if "imageLinks" in data["volumeInfo"].keys() else "No Image"}}
          return jsonify(book),200
 

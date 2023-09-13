@@ -128,49 +128,24 @@ def get_friend_list(friend):
           isFriends = FriendList.query.filter_by(userIdLower= lowerId, userIdHigher = higherId).first()
           if isFriends:
               booklist = {"books":[]}
-              list = db.session.query(Book.id, Book.title, Book.author, Book.publishDate, Book.image, BookList.priority).join(Book, BookList.bookId == Book.id).filter(BookList.userId == friend_user.id).all()
+              list = db.session.query(Book.id, Book.title, Book.subtitle, Book.author, Book.publishDate, Book.image, Book.small_image, BookList.priority).join(Book, BookList.bookId == Book.id).filter(BookList.userId == friend_user.id).all()
 
               if list:
                   print(list)
                   for i in range(len(list)):
                       book = {"title": list[i].title,
-                 "author": list[i].author,
-                 "publishDate":  list[i].publishDate,
-                  "image": list[i].image,
-                  "priority": str(list[i].priority),
-                  "id": str(i) }
+                            'subtitle': list[i].subtitle,
+                            "author": list[i].author,
+                            "publishDate":  list[i].publishDate,
+                            "image": {'img':list[i].image, 'imgSml':list[i].small_image},
+                            "priority": str(list[i].priority),
+                            "id": str(i) }
                       booklist["books"].append(book)
                   return jsonify(booklist), 200
               return jsonify({"Message": "Empty List"})
           return jsonify({"Error": f'User {username} and User {friend} are not friends.'}), 400
       return jsonify({"Error": f'User {friend} does not exist.'}), 400
    return jsonify({"Error": "User {username} authentication failed. "}), 400
-
-
-
-#requires input with key 'username'. 
-@api.post('/remove-friend')
-@jwt_required()
-def remove_friend():
-    data = request.json
-    try: 
-        friend = data["username"]
-    except:
-        return jsonify({"Error": "Incorrectly formatted request"}), 400
-    username = get_jwt_identity()
-    user = User.query.filter_by(username = username).first()
-    if user: 
-        friendUser= User.query.filter_by(username = friend).first()
-        if friend:
-            lowerId  = user.id if (user.id < friendUser.id) else friendUser.id
-            higherId = user.id if lowerId == friendUser.id else friendUser.id
-            isFriend = FriendList.query.filter_by(userIdLower = lowerId, userIdHigher = higherId).first()
-            if isFriend:
-                isFriend.delete()
-                return jsonify({"Success": f'You are no longer friends with {friend}'}), 400
-            return jsonify({"Error": f'Cannot remove {friend} from friends; you aren\'t friends with them in the first place.'}), 400
-        return jsonify({"Error": f'Cannot find user "{friend}"'}), 400
-    return jsonify({"Error": "Cannot access account, please ensure that you are logged in."})
 
 
 
