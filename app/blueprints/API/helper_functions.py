@@ -38,7 +38,7 @@ def get_account_data(user):
           response["friends"][friend.username]["readingHistory"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'subtitle': books.subtitle, 'author': books.author, 'publishDate': books.publishDate, 'image': {'img':books.image,'imgSml': books.imgSml}}, "review": books.review, "rating": books.rating, "date": books.date})
     
     #Accessing incoming Recommendations: 
-   recommendations = db.session.query(BookRequests.fromId, Book.googleId, Book.title, Book.subtitle, Book.author, Book.image, Book.small_image Book.publishDate, BookRequests.toId, BookRequests.date, BookRequests.shortMessage, BookRequests.bookId, User.username).join(User, User.id == BookRequests.fromId).join(Book, Book.id == BookRequests.bookId).filter(BookRequests.toId == user.id).all()
+   recommendations = db.session.query(BookRequests.fromId, Book.googleId, Book.title, Book.subtitle, Book.author, Book.image, Book.small_image, Book.publishDate, BookRequests.toId, BookRequests.date, BookRequests.shortMessage, BookRequests.bookId, User.username).join(User, User.id == BookRequests.fromId).join(Book, Book.id == BookRequests.bookId).filter(BookRequests.toId == user.id).all()
    for books in recommendations: 
         response["recommendations"]["in"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'subtitle': books.subtitle, 'author': books.author, 'publishDate': books.publishDate, 'image': {'img':books.image,'imgSml': books.imgSml}}, 'from': books.username, 'msg': books.shortMessage, 'date': books.date} )
 
