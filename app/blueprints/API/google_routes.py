@@ -12,42 +12,48 @@ import requests
 
 
 #This route searches for a book in google's API database. It accepts objects with at least one of the following keys. 
-#{"intitle": <section of the title>, "inauthor": <section of the author>}
+#{"intitle": <section of the title>, "inauthor": <section of the author>, "startindex": <starting index, for pagination}
 @api.post('/book-search')
 @jwt_required()
 def search_book_from_google():
     data = request.json
     title, author, how_many_entries = "", "", 10
-    if "howManyEntries" in data.keys():
-         try:
-           how_many_entries =  int(data["howManyEntries"])
-         except:
-            return jsonify({"Error": "A non integer number of entries was requested."}),400
+    
 
     if "title" in data.keys() and data["title"]!=  "":
         title = '"' + data["title"] + '"'
     if "author" in data.keys() and data["author"]!= "":
         author = '"' + data["author"] + '"'
     if (title == "" and author == ""):
-        return jsonify({"Error": "Request cannot be carried out, without at least one value for author or title."}), 400
-    string = 'https://www.googleapis.com/books/v1/volumes?q=' + f'{"intitle:"  + title if title!= "" else "" }'
-    string = string + f'{"inauthor:" + author if author!= "" else ""}'
-    string = string + "&fields=totalItems,items/volumeInfo/title,items/volumeInfo/authors,items/volumeInfo/publishedDate,items/volumeInfo/imageLinks/thumbnail, items/id"
+        return jsonify({"Error": "Request cannot be carried out if both author and title are left blank."}), 400
+    if "startIndex" in data.keys():
+        start_index = data["startIndex"]
+    string = 'https://www.googleapis.com/books/v1/volumes?q=' + f'{"intitle:"  + title + "+" if title!= "" else "" }'
+    string = string + f'{"inauthor:" + author + "+"  if author!= "" else ""}'
+ 
+    string = string + "&startIndex=" + start_index + "&fields=totalItems,items/volumeInfo/title,items/volumeInfo/authors,items/volumeInfo/publishedDate,items/volumeInfo/imageLinks/thumbnail,items/volumeInfo/imageLinks/smallThumbnail, items/id"
     string = string + f'&key={Config.GOOGLE_API_KEY}'
     data = requests.get(string).json()
+    
+    print(data)
     if data["totalItems"] == 0:
-        return jsonify({"Error": "No items found."})
+        return jsonify({"Error": "No items found.", "code": 404}), 404
     found_books = {"books": []}
+    print(data)
     for entry in data["items"]:
         book = {"googleId": entry["id"],
                 "title": entry["volumeInfo"]["title"],
                 "author":entry["volumeInfo"]["authors"][0] if "authors" in entry["volumeInfo"].keys() else "Unknown",
                 "publishDate": entry["volumeInfo"]["publishedDate"] if "publishedDate" in entry["volumeInfo"].keys() else "No Date",
-                "image": entry["volumeInfo"]["imageLinks"]["thumbnail"] if "imageLinks" in entry["volumeInfo"].keys() else "No Image"}
+                "image": {
+                    "img": entry["volumeInfo"]["imageLinks"]["thumbnail"] if "imageLinks" in entry["volumeInfo"].keys() else "No Image",
+                    "imgSml": entry["volumeInfo"]["imageLinks"]["smallThumbnail"] if "imageLinks" in entry["volumeInfo"].keys() else "No Image"
+                          }
+            }
         found_books["books"].append(book)
+        
         if len(found_books["books"]) >= how_many_entries or len(found_books["books"]) > 29:
             break;
-    
     return jsonify(found_books), 200
 
 
@@ -57,7 +63,7 @@ def search_book_from_google():
 #It also allows for an optional 'toUser' key, which instead adds the book to another's reading list.
 @api.post("add-book-list")
 @jwt_required()
-def add_book_list():
+def add_book_list():    
     data = request.json
 
     if "googleId" not in data.keys():

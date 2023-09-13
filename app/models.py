@@ -45,6 +45,7 @@ class Book(db.Model):
     title = db.Column(db.String(), nullable = False)
     author = db.Column(db.String(), nullable = True)
     image = db.Column(db.String(), nullable = True)
+    small_image = db.Column(db.String(), nullable=True)
     publishDate = db.Column(db.String(), nullable = True)
     googleId = db.Column(db.String())
 
