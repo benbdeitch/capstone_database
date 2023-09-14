@@ -1,4 +1,5 @@
 from flask_jwt_extended import create_access_token
+import requests
 from sqlalchemy import or_
 from app import db
 from app.models import Book, BookHistory, BookList, BookRequests, FriendList, FriendRequest, User
@@ -19,7 +20,7 @@ def get_account_data(user):
 
    reading_history = db.session.query(BookHistory.date, Book.id, Book.title, Book.subtitle, Book.author, Book.googleId, Book.publishDate, Book.image, Book.small_image, BookHistory.review, BookHistory.rating).join(Book, BookHistory.bookId == Book.id).filter(BookHistory.userId== user.id).all()
    for books in reading_history:
-       response['readingHistory'].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'subtitle': books.subtitle, 'author': books.author, 'publishDate': books.publishDate, 'image': {'img':books.image,'imgSml': books.imgSml}}, "review": books.review, "rating": books.rating, "date": books.date})
+       response['readingHistory'].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'subtitle': books.subtitle, 'author': books.author, 'publishDate': books.publishDate, 'image': {'img':books.image,'imgSml': books.small_image}}, "review": books.review, "rating": books.rating, "date": books.date})
 
    #Accesses the Friend's list
    allFriends = FriendList.query.filter(or_(FriendList.userIdLower== user.id, FriendList.userIdHigher == user.id)).all()
@@ -27,12 +28,12 @@ def get_account_data(user):
       friend_id = query.userIdLower if query.userIdLower!= user.id else query.userIdHigher
       friend = User.query.filter_by(id = friend_id).first()
 
-      friend_reading_list = db.session.query(User.username, Book.googleId, Book.title, Book.author, Book.publishDate, Book.image, BookList.priority, BookList.dateAdded).join(Book, BookList.bookId == Book.id).outerjoin(User, BookList.recommendedBy == User.id ).filter(BookList.userId == friend.id).all()
+      friend_reading_list = db.session.query(User.username, Book.googleId, Book.title, Book.subtitle, Book.author, Book.publishDate, Book.image, Book.small_image, BookList.priority, BookList.dateAdded).join(Book, BookList.bookId == Book.id).outerjoin(User, BookList.recommendedBy == User.id ).filter(BookList.userId == friend.id).all()
       
       response["friends"].update({friend.username: {"email": friend.email, "date": query.date, "readingList": [], "readingHistory": []}})
       for books in friend_reading_list:
          
-          response["friends"][friend.username]["readingList"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'subtitle': books.subtitle, 'author': books.author, 'publishDate': books.publishDate, 'image': {'img':books.image,'imgSml': books.imgSml}}, 'dateAdded': books.dateAdded, 'priority': books.priority, 'from':books.username })
+          response["friends"][friend.username]["readingList"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'subtitle': books.subtitle, 'author': books.author, 'publishDate': books.publishDate, 'image': {'img':books.image,'imgSml': books.small_image}}, 'dateAdded': books.dateAdded, 'priority': books.priority, 'from':books.username })
       history = db.session.query(BookHistory.date, Book.id, Book.title, Book.subtitle, Book.author, Book.googleId, Book.publishDate, Book.image, Book.small_image, BookHistory.review, BookHistory.rating).join(Book, BookHistory.bookId == Book.id).filter(BookHistory.userId== friend.id).all()
       for books in history:
           response["friends"][friend.username]["readingHistory"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'subtitle': books.subtitle, 'author': books.author, 'publishDate': books.publishDate, 'image': {'img':books.image,'imgSml': books.imgSml}}, "review": books.review, "rating": books.rating, "date": books.date})
@@ -57,3 +58,12 @@ def get_account_data(user):
        response["friendRequests"]["out"].append({"to": requests.username, 'date': requests.date})
    print(response)
    return response
+
+#helper function:
+def add_to_database(googleId):
+    data = requests.get(F'https://www.googleapis.com/books/v1/volumes/{googleId}').json()
+    if "error" in data.keys():
+        return False
+    book = Book(title = data["volumeInfo"]["title"], author = data["volumeInfo"]["authors"][0] if "authors" in data["volumeInfo"].keys() else None, subtitle = data["volumeInfo"]["subtitle"], image = data["volumeInfo"]["imageLinks"]["thumbnail"] if "imageLinks" in data["volumeInfo"].keys() else None, small_image = data["volumeInfo"]["imageLinks"]["small_thumbnail"] if "imageLinks" in data["volumeInfo"].keys() else None, publishDate = data["volumeInfo"]["publishedDate"] if "publishedDate" in data["volumeInfo"].keys() else None, googleId = googleId)
+    book.commit()
+    return book
