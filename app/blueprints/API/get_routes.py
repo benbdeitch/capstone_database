@@ -28,13 +28,13 @@ def get_book_list():
    user = User.query.filter_by(username = username).first()
    if user:
       booklist = {"books":[]}
-      reading_list = db.session.query(BookList.dateAdded, Book.id, Book.googleId, Book.title, Book.author, Book.publishDate, Book.image, Book.small_image, BookList.priority, User.username).outerjoin(User, BookList.recommendedBy == User.id).join(Book, BookList.bookId == Book.id).filter(BookList.userId == user.id).all()
+      reading_list = db.session.query(BookList.dateAdded, Book.id, Book.googleId, Book.title, Book.subtitle, Book.author, Book.publishDate, Book.image, Book.small_image, BookList.priority, User.username).outerjoin(User, BookList.recommendedBy == User.id).join(Book, BookList.bookId == Book.id).filter(BookList.userId == user.id).all()
    
       if reading_list:
          print(reading_list)
          reading_list.sort(reverse = True, key =lambda item: item.priority)
          for books in reading_list:
-            booklist['books'].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'author': books.author, 'publishDate': books.publishDate, 'image': {"image": books.image, "thumbnail": books.smallImage}}, 'dateAdded': books.dateAdded, 'priority': books.priority, 'from':books.username })
+            booklist['books'].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'author': books.author, 'publishDate': books.publishDate, 'image': {"img": books.image, "imgSml": books.small_image}}, 'dateAdded': books.dateAdded, 'priority': books.priority, 'from':books.username })
 
          return jsonify(booklist), 200
       return jsonify({"Message": "Empty List"})
