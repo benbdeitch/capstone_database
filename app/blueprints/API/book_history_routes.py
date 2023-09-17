@@ -2,6 +2,9 @@
 from datetime import date
 from flask import request, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
+
+from app.blueprints.API.helper_functions.get_from_database.reading_history import get_reading_history
+from app.blueprints.API.helper_functions.google_database.add_book_by_id import add_to_database
 from . import bp as api
 from app.models import FriendList, User, BookList, Book, BookHistory
 from app import db
@@ -62,12 +65,7 @@ def get_history(other_user):
     username = get_jwt_identity();
     user = User.query.filter_by(username = username).first()
     if username == other_user:
-         response = {"history": []}
-         history = db.session.query(Book.id, Book.title, Book.subtitle, Book.author, Book.googleId, Book.publishDate, Book.image, Book.small_image, BookHistory.date, BookHistory.review, BookHistory.rating).join(Book, BookHistory.bookId == Book.id).filter(BookHistory.userId== user.id).all()
-         for query in history:
-             book_review = {"date": query.date, "title": query.title, "subtitle": query.subtitle, "author": query.author, "googleId": query.googleId, "publishDate": query.publishDate, "image":{'img':query.image, 'imgSml':query.small_image}, "review": query.review, "rating": query.rating}
-             response["history"].append(book_review)
-         return jsonify(response), 200
+         return jsonify({"history": get_reading_history(user)}), 200
     user = User.query.filter_by(username = username).first()
     searchee = User.query.filter_by(username = other_user).first()
     if not searchee:
@@ -78,12 +76,7 @@ def get_history(other_user):
         is_friend = FriendList.query.filter_by(userIdHigher = searchee.id, userIdLower = user.id).first()
     if not is_friend:
         return jsonify({"Error": f'Cannot access the reading list of {searchee.username} without being friends.'}), 400
-    response = {"history": []}
-    history = db.session.query(BookHistory.date, Book.id, Book.title, Book.subtitle, Book.author, Book.googleId, Book.publishDate, Book.image, Book.small_image, BookHistory.review, BookHistory.rating).join(Book, BookHistory.bookId == Book.id).filter(BookHistory.userId== searchee.id).all()
-    for query in history:
-        book_review = {"date": query.date, "title": query.title, "author": query.author, "googleId": query.googleId, "publishDate": query.publishDate, "image": {'img':query.image, 'imgSml':query.small_image}, "review": query.review, "rating": query.rating}
-        response["history"].append(book_review)
-    return jsonify(response), 200
+    return jsonify( {"history": get_reading_history(searchee)}), 200
         
 
 @api.delete('/history/delete')
@@ -102,12 +95,4 @@ def delete_history():
     else:
         return jsonify({"Error": f'No entry with id {data["googleId"]} found. '}), 400
 
-#helper function:
-#helper function:
-def add_to_database(googleId):
-    data = requests.get(F'https://www.googleapis.com/books/v1/volumes/{googleId}').json()
-    if "error" in data.keys():
-        return False
-    book = Book(title = data["volumeInfo"]["title"], author = data["volumeInfo"]["authors"][0] if "authors" in data["volumeInfo"].keys() else None, subtitle = data["volumeInfo"]["subtitle"], image = data["volumeInfo"]["imageLinks"]["thumbnail"] if "imageLinks" in data["volumeInfo"].keys() else None, small_image = data["volumeInfo"]["imageLinks"]["smallThumbnail"] if "imageLinks" in data["volumeInfo"].keys() else None, publishDate = data["volumeInfo"]["publishedDate"] if "publishedDate" in data["volumeInfo"].keys() else None, googleId = googleId)
-    book.commit()
-    return book
+

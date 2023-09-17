@@ -1,8 +1,8 @@
 from flask import request, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from . import bp as api
-from app.models import User, BookList, Book, BookRequests
-from app import db
+from app.models import User, BookList, Book
+
 
 
 

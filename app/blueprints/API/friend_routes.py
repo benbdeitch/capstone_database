@@ -1,4 +1,6 @@
 from datetime import date
+
+from app.blueprints.API.helper_functions.get_from_database.friends_list import get_friends
 from . import bp as api
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from app.models import User, FriendRequest, FriendList, Book, BookList
@@ -96,21 +98,10 @@ def decline_request():
 @jwt_required()
 def get_all_friends():
     print("Getting Friends")
-    response = {"friends": []}
     username = get_jwt_identity();
     user = User.query.filter_by(username = username).first()
-    allFriends = FriendList.query.filter(or_(FriendList.userIdLower== user.id, FriendList.userIdHigher == user.id )).all()
-    if len(allFriends) == 0:
-        return jsonify(response), 200
-    friend_id_list = []
-    for query in allFriends:
-        friend_id_list.append(query.userIdLower if query.userIdLower!= user.id else query.userIdHigher)
-    print(friend_id_list)
-    
-    for id in friend_id_list:
-        friend = User.query.filter_by(id = id).first()
-        response["friends"].append({"username": friend.username, "email": friend.email, "date": friend.date})
-    return jsonify(response), 200
+
+    return jsonify({"friends": get_friends(user)}), 200
 
 
 

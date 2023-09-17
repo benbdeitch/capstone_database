@@ -1,8 +1,9 @@
-from flask import request, jsonify
-from flask_jwt_extended import create_access_token, jwt_required, unset_jwt_cookies
+from datetime import datetime, timedelta
+from flask import make_response, request, jsonify
+from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, jwt_required, set_access_cookies, unset_jwt_cookies
 from sqlalchemy import or_
 
-from app.blueprints.API.helper_functions import get_account_data
+from app.blueprints.API.helper_functions.get_from_database.account_data import get_account_data
 from . import bp as api
 from app.models import FriendList, User, BookList, Book
 from app import db
@@ -40,8 +41,11 @@ def register():
         
         u.hash_password(content["password"])
         u.commit()
+        response = make_response(jsonify({'Success': f'User account created for {u.username}.'}))
         access_token = create_access_token(identity = content["username"])
-        return jsonify({'Success': f'User account created for {u.username}.', "access_token": str(access_token)})
+        set_access_cookies(response, access_token)
+       
+        return response,200
     else:
         return jsonify(response), 400
     
@@ -49,14 +53,17 @@ def register():
 #Accepts a request with {"username": <user's username>, "password": <user's password>}. Returns an access token that is used for verification by JWT, along with the other information used by the program.
 @api.post('/signin')
 def sign_in():
+   
    username, password = request.json.get('username').strip(), request.json.get('password')
    user = User.query.filter_by(username=username).first()
    if user and user.check_password(password):
-      response = get_account_data(user)
-      response["token"] = create_access_token(identity=username)
-      response["username"] = username
-      response["email"] = user.email
-      return jsonify(response), 200
+      body = get_account_data(user)
+      body["username"] = username
+      body["email"] = user.email
+      response = make_response(jsonify(body))
+      now = datetime.now
+      response.set_cookie('auth_token', create_access_token(identity=username), httponly=True, secure=True, expires=datetime.timestamp(now() + timedelta(minutes=30)))
+      return response, 200
    else:
       return jsonify({'Error':'Invalid Username or Password / Try Again'}), 400
 
@@ -74,3 +81,19 @@ def logout():
 @jwt_required()
 def check_token():
    return jsonify({"msg": "Successful authentication"}), 200
+
+@api.after_request
+def refresh_expiring_jwts(response):
+    try:
+        print("Working")
+        exp_timestamp = get_jwt()["exp"]
+        now = datetime.now
+        target_timestamp = datetime.timestamp(now + timedelta(minutes=30))
+        print ("Working")
+        if target_timestamp > exp_timestamp:
+            access_token = create_access_token(identity=get_jwt_identity())
+            set_access_cookies(response, access_token)
+        return response
+    except (RuntimeError, KeyError):
+        # Case where there is not a valid JWT. Just return the original response
+        return response

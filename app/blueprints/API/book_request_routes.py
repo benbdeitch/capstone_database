@@ -1,6 +1,9 @@
 from datetime import date
 from flask import request, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
+from app.blueprints.API.helper_functions.get_from_database.recommendations import get_recommendations
+
+from app.blueprints.API.helper_functions.google_database.add_book_by_id import add_to_database
 from . import bp as api
 from app.models import User, BookList, Book, BookRequests
 from app import db
@@ -41,24 +44,7 @@ def recommend_book():
 def get_my_recommendations():
     username = get_jwt_identity()
     user = User.query.filter_by(username = username).first()
-    recommendations = db.session.query(Book.id, Book.title,Book.subtitle, Book.author, Book.googleId, Book.publishDate, Book.image,Book.small_image, BookRequests.toId, BookRequests.fromId, BookRequests.shortMessage, BookRequests.date, BookRequests.index).join(Book, BookRequests.bookId == Book.id).filter(BookRequests.toId == user.id).all()
-
-  
-    response = {"recommendations": {"in":[], "out":[]}}
-    
-      #Accessing incoming Recommendations: 
-    recommendations = db.session.query(BookRequests.fromId, Book.googleId, Book.title, Book.subtitle, Book.author, Book.image, Book.small_image, Book.publishDate, BookRequests.toId, BookRequests.date, BookRequests.shortMessage, BookRequests.bookId, User.username).join(User, User.id == BookRequests.fromId).join(Book, Book.id == BookRequests.bookId).filter(BookRequests.toId == user.id).all()
-    for books in recommendations: 
-        response["recommendations"]["in"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'subtitle':books.subtitle, 'author': books.author, 'publishDate': books.publishDate, 'image': books.image, 'imageSmall':books.small_image}, 'from': books.username, 'msg': books.shortMessage, 'date': books.date} )
-
-    #accessing outgoing recommendations:
-    out_recommendations = db.session.query(BookRequests.fromId, Book.googleId, Book.title, Book.subtitle, Book.author, Book.image, Book.small_image, Book.publishDate, BookRequests.toId, BookRequests.date, BookRequests.shortMessage, BookRequests.bookId, User.username).join(User, User.id == BookRequests.toId).join(Book, Book.id == BookRequests.bookId).filter(BookRequests.fromId == user.id).all()
-    for books in recommendations: 
-         response["recommendations"]["out"].append({'book':{ 'googleId': books.googleId, 'title': books.title, 'subtitle':Book.subtitle, 'author': books.author, 'publishDate': books.publishDate, 'image': books.image, 'imageSmall':Book.small_image}, 'to': books.username, 'msg': books.shortMessage, 'date': books.date} )
-    return jsonify(response), 200
-
-
-
+    return jsonify({"recommendations": get_recommendations(user)}), 200
 
 
 #Accepts a request with  {"index": <index>}
@@ -95,11 +81,3 @@ def deny_recommendation():
     return jsonify({"Success": "Recommendation deleted."})
 
 
-#helper function:
-def add_to_database(googleId):
-    data = requests.get(F'https://www.googleapis.com/books/v1/volumes/{googleId}').json()
-    if "error" in data.keys():
-        return False
-    book = Book(title = data["volumeInfo"]["title"], author = data["volumeInfo"]["authors"][0] if "authors" in data["volumeInfo"].keys() else None, subtitle = data["volumeInfo"]["subtitle"], image = data["volumeInfo"]["imageLinks"]["thumbnail"] if "imageLinks" in data["volumeInfo"].keys() else None, small_image = data["volumeInfo"]["imageLinks"]["small_thumbnail"] if "imageLinks" in data["volumeInfo"].keys() else None, publishDate = data["volumeInfo"]["publishedDate"] if "publishedDate" in data["volumeInfo"].keys() else None, googleId = googleId)
-    book.commit()
-    return book

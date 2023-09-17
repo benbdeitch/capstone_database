@@ -2,6 +2,8 @@ from datetime import date
 from flask import request, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from sqlalchemy import func
+
+from app.blueprints.API.helper_functions.google_database.add_book_by_id import add_to_database
 from . import bp as api
 from app.models import User, BookList, Book, BookRequests
 from app import db
@@ -94,14 +96,7 @@ def add_book_list():
     
 
 
-#helper function:
-def add_to_database(googleId):
-    data = requests.get(F'https://www.googleapis.com/books/v1/volumes/{googleId}').json()
-    if "error" in data.keys():
-        return False
-    book = Book(title = data["volumeInfo"]["title"], author = data["volumeInfo"]["authors"][0] if "authors" in data["volumeInfo"].keys() else None, subtitle = data["volumeInfo"]["subtitle"], image = data["volumeInfo"]["imageLinks"]["thumbnail"] if "imageLinks" in data["volumeInfo"].keys() else None, small_image = data["volumeInfo"]["imageLinks"]["small_thumbnail"] if "imageLinks" in data["volumeInfo"].keys() else None, publishDate = data["volumeInfo"]["publishedDate"] if "publishedDate" in data["volumeInfo"].keys() else None, googleId = googleId)
-    book.commit()
-    return book
+
 
 @api.get('/book/<googleId>')
 @jwt_required()
