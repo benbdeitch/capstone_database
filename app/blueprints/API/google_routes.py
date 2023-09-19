@@ -90,7 +90,7 @@ def add_book_list():
     alreadyInList = BookList.query.filter_by(userId = user.id, bookId = bookId).first()
     if alreadyInList:
          return jsonify({"Error": f'Book {title} already in user\'s reading list.'}), 400
-    new_list = BookList(userId = user.id, bookId = bookId, priority = priority, dateAdded = date.today())
+    new_list = BookList(userId = user.id, bookId = bookId, priority = priority, dateAdded = date.today()[:-12])
     new_list.commit();
     return jsonify({"Success": f'Book {title} successfully added.', 'priority': priority}),200
     
