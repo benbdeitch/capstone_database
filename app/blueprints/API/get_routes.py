@@ -1,11 +1,11 @@
-from flask import request, jsonify
+from flask import jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.blueprints.API.helper_functions.get_from_database.account_data import get_account_data
 from app.blueprints.API.helper_functions.get_from_database.reading_list import get_reading_list
 from . import bp as api
-from app.models import User, BookList, Book, BookRequests
-from app import db
+from app.models import User
+
 
 
 #Currently returns a user's username and email. May later be integrated with the 'get friend's reading list' function.

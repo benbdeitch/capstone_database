@@ -61,8 +61,10 @@ def sign_in():
       body["username"] = username
       body["email"] = user.email
       response = make_response(jsonify(body))
+      response.credentials = "same-origin "
+
       now = datetime.now
-      response.set_cookie('auth_token', create_access_token(identity=username), httponly=True, secure=True, expires=datetime.timestamp(now() + timedelta(minutes=30)))
+      response.set_cookie('auth_token', create_access_token(identity=username), expires=datetime.timestamp(now() + timedelta(minutes=30)))
       return response, 200
    else:
       return jsonify({'Error':'Invalid Username or Password / Try Again'}), 400
@@ -81,6 +83,18 @@ def logout():
 @jwt_required()
 def check_token():
    return jsonify({"msg": "Successful authentication"}), 200
+
+
+@api.post('/check-cookie')
+def check_cookie():
+   cookies = request.cookies
+   print(request.cookies)
+   for cookie in cookies:
+      print(cookie.name, cookie.value, cookie.domain)
+      print(len(cookies))
+   response = make_response(jsonify({"msg": "Successful authentication"}))
+   response.headers['Access-Control-Allow-Credentials'] = '*'
+   return response, 200
 
 @api.after_request
 def refresh_expiring_jwts(response):

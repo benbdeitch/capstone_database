@@ -16,12 +16,12 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 
 migrate = Migrate(app, db)
-CORS(app)
+CORS(app, supports_credentials=True, origins="http://localhost:5173")
 jwt = JWTManager(app)
 
 
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours = 1)
-app.config["JWT_COOKIE_SECURE"] = False
+app.config["JWT_COOKIE_SECURE"] = True
 app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
 app.config["JWT_SECRET_KEY"] = "asf32KVs9324KSWO"  # Change this in your code!
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
