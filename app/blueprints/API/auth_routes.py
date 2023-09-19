@@ -57,15 +57,13 @@ def sign_in():
    username, password = request.json.get('username').strip(), request.json.get('password')
    user = User.query.filter_by(username=username).first()
    if user and user.check_password(password):
-      body = get_account_data(user)
-      body["username"] = username
-      body["email"] = user.email
-      response = make_response(jsonify(body))
-      response.credentials = "same-origin "
 
-      now = datetime.now
-      response.set_cookie('auth_token', create_access_token(identity=username), expires=datetime.timestamp(now() + timedelta(minutes=30)))
-      return response, 200
+      response = get_account_data(user)
+      response["username"] = username
+      response["email"] = user.email
+      response["token"] =  create_access_token(identity=username)
+    
+      return jsonify(response), 200
    else:
       return jsonify({'Error':'Invalid Username or Password / Try Again'}), 400
 
@@ -84,29 +82,17 @@ def logout():
 def check_token():
    return jsonify({"msg": "Successful authentication"}), 200
 
-
-@api.post('/check-cookie')
-def check_cookie():
-   cookies = request.cookies
-   print(request.cookies)
-   for cookie in cookies:
-      print(cookie.name, cookie.value, cookie.domain)
-      print(len(cookies))
-   response = make_response(jsonify({"msg": "Successful authentication"}))
-   response.headers['Access-Control-Allow-Credentials'] = '*'
-   return response, 200
-
 @api.after_request
 def refresh_expiring_jwts(response):
     try:
         print("Working")
         exp_timestamp = get_jwt()["exp"]
         now = datetime.now
-        target_timestamp = datetime.timestamp(now + timedelta(minutes=30))
-        print ("Working")
+        target_timestamp = datetime.timestamp(now() + timedelta(minutes=30))
         if target_timestamp > exp_timestamp:
-            access_token = create_access_token(identity=get_jwt_identity())
-            set_access_cookies(response, access_token)
+            response.json["token"] = create_access_token(identity=get_jwt_identity())
+            print("resetting token")
+            
         return response
     except (RuntimeError, KeyError):
         # Case where there is not a valid JWT. Just return the original response
