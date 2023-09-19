@@ -30,7 +30,7 @@ def get_book_list():
    if user:
       
    
-      return jsonify({"readingList": get_reading_list(user)})
+      return jsonify({"books": get_reading_list(user)})
    return jsonify({"Error": "User Not Found"}), 400
 
 
